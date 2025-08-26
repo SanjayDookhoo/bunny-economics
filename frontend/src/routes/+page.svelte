@@ -1,1 +1,5 @@
-<div class="h-4 w-4 bg-red-400"></div>
+<script>
+	import GameWindow from '../components/GameWindow.svelte';
+</script>
+
+<GameWindow />
