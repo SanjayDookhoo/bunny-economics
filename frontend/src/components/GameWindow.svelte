@@ -1,9 +1,13 @@
 <script>
 	import { onMount } from 'svelte';
 
+	const xAxisMaxDelta = 15;
+
 	let xAxisCurrentInterval;
 	let yAxisCurrentInterval;
+	let xAxisMouseIntervalId;
 
+	let mousePositionX = $state(0);
 	let userPositionX = $state(0);
 	let userPositionY = $state(0);
 	let userFacingDirection = $state('right');
@@ -11,26 +15,25 @@
 		width: 0,
 		height: 0,
 	});
-	let gameWindowRef;
+	let gameWindowRef = $state();
 
-	// Move current toward target with a maximum change per step as maxDelta.
-	const moveTowards = (current, target, maxDelta) => {
-		if (Math.abs(target - current) <= maxDelta) {
-			return target; // close enough, snap to target
-		}
-		return current + Math.sign(target - current) * maxDelta;
-	};
+	// check on interval
+	// onmount here used to prevent hot reloading from stacking multiple intervals
+	onMount(() => {
+		xAxisMouseIntervalId = setInterval(() => {
+			if (Math.abs(mousePositionX - userPositionX) <= xAxisMaxDelta) {
+				userPositionX = mousePositionX; // close enough, snap to target
+			} else {
+				if (mousePositionX < userPositionX) {
+					userPositionX -= xAxisMaxDelta;
+				} else if (mousePositionX > userPositionX) {
+					userPositionX += xAxisMaxDelta;
+				}
+			}
+		}, 16);
 
-	const moveHorizontallyOnGround = (xAxisPosition) => {
-		if (userPositionY != 0) return;
-
-		clearInterval(xAxisCurrentInterval);
-
-		// simulate animation loop
-		xAxisCurrentInterval = setInterval(() => {
-			userPositionX = moveTowards(userPositionX, xAxisPosition, 10);
-		}, 16); // ~60fps
-	};
+		return () => clearInterval(xAxisMouseIntervalId);
+	});
 
 	// handle horizontal mouse move
 	onMount(() => {
@@ -39,9 +42,7 @@
 		const handleMouseMove = (e) => {
 			const rect = gameWindowRef.getBoundingClientRect();
 			// X position relative to the element
-			const xAxisPosition = e.clientX - rect.left;
-
-			moveHorizontallyOnGround(xAxisPosition);
+			mousePositionX = e.clientX - rect.left;
 		};
 
 		gameWindowRef.addEventListener('mousemove', handleMouseMove);
