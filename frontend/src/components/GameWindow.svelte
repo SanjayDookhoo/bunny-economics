@@ -32,31 +32,42 @@
 	// check on interval
 	// onmount here used to prevent hot reloading from stacking multiple intervals
 	onMount(() => {
-		xAxisMouseIntervalId = setInterval(() => {
-			if (userPositionX === undefined || mousePositionX == undefined) return;
+		const X_SPEED_PX_PER_SEC = X_AXIS_MAX_DELTA * 60;
+		let raf;
+		let prev = performance.now();
 
-			if (userPositionX < gameWindowDimensions.minXAxisValue) {
-				mousePositionX = userPositionX = gameWindowDimensions.minXAxisValue;
-			} else if (
-				userPositionX >
-				gameWindowDimensions.maxXAxisValue - USER_HITBOX_WIDTH
-			) {
-				mousePositionX = userPositionX =
-					gameWindowDimensions.maxXAxisValue - USER_HITBOX_WIDTH;
-			} else {
-				if (Math.abs(mousePositionX - userPositionX) <= X_AXIS_MAX_DELTA) {
-					userPositionX = mousePositionX; // close enough, snap to target
+		const tick = (now) => {
+			const dt = Math.min(0.1, Math.max(0, (now - prev) / 1000)); // seconds
+			prev = now;
+
+			if (userPositionX !== undefined && mousePositionX !== undefined) {
+				const minX = gameWindowDimensions.minXAxisValue;
+				const maxX = gameWindowDimensions.maxXAxisValue - USER_HITBOX_WIDTH;
+
+				// clamp goal to bounds
+				mousePositionX = Math.max(minX, Math.min(maxX, mousePositionX));
+
+				if (userPositionX < minX) {
+					userPositionX = mousePositionX = minX;
+				} else if (userPositionX > maxX) {
+					userPositionX = mousePositionX = maxX;
 				} else {
-					if (mousePositionX < userPositionX) {
-						userPositionX -= X_AXIS_MAX_DELTA;
-					} else if (mousePositionX > userPositionX) {
-						userPositionX += X_AXIS_MAX_DELTA;
+					const dx = mousePositionX - userPositionX;
+					const step = X_SPEED_PX_PER_SEC * dt;
+
+					if (Math.abs(dx) <= step) {
+						userPositionX = mousePositionX; // snap when close
+					} else {
+						userPositionX += Math.sign(dx) * step;
 					}
 				}
 			}
-		}, 16);
 
-		return () => clearInterval(xAxisMouseIntervalId);
+			raf = requestAnimationFrame(tick);
+		};
+
+		raf = requestAnimationFrame(tick);
+		return () => cancelAnimationFrame(raf);
 	});
 
 	// check on interval
@@ -91,7 +102,7 @@
 				const a = 1 - Math.exp(-dt / TAU_Y);
 				userPositionY += (goalPositionY - userPositionY) * a;
 
-				// optional: snap when extremely close to avoid a long tiny tail
+				// snap when extremely close to avoid a long tiny tail
 				if (Math.abs(goalPositionY - userPositionY) < 0.001) {
 					userPositionY = goalPositionY;
 				}
