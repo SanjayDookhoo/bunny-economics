@@ -12,7 +12,7 @@
 	const Y_VARIANCE_AMOUNT = 20; // px
 	const Y_BETWEEN_BELLS_BASE_HEIGHT = 150; // px
 	const BELLS_AUTO_FALL_SPEED_PER_SEC = 30;
-	const Y_JUMP = 300; // px
+	const Y_JUMP = 370; // px
 
 	let xAxisCurrentInterval;
 	let yAxisCurrentInterval;
@@ -299,8 +299,7 @@
 		}
 		const bellIndex = bellId % BELLS_MAX_COUNT;
 		clearInterval(bellsArr[bellIndex].intervalId);
-		goalPositionY =
-			bellsArr[bellIndex].YPositionPX + BELL_HITBOX_HEIGHT + Y_JUMP;
+		goalPositionY = userPositionY + BELL_HITBOX_HEIGHT + Y_JUMP;
 		createNewBell(bellIndex);
 	};
 
