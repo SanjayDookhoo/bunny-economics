@@ -10,9 +10,9 @@
 	const BELL_HITBOX_HEIGHT = 64; // px
 	const BELLS_MAX_COUNT = 30;
 	const Y_VARIANCE_AMOUNT = 20; // px
-	const Y_BETWEEN_BELLS_BASE_HEIGHT = 200; // px
+	const Y_BETWEEN_BELLS_BASE_HEIGHT = 150; // px
 	const BELLS_AUTO_FALL_SPEED_PER_SEC = 30;
-	const Y_JUMP = 200; // px
+	const Y_JUMP = 300; // px
 
 	let xAxisCurrentInterval;
 	let yAxisCurrentInterval;
@@ -37,7 +37,7 @@
 	});
 	let bellsArr = $state([]);
 	let latestBellId = $state(-1);
-	let scrollingBellsStartingYPositionPX = $state(400); // px
+	let scrollingBellsStartingYPositionPX = $state(250); // px
 	let gameWindowRef = $state();
 
 	const getRandomIntInclusive = (start, end) => {
@@ -138,7 +138,7 @@
 	// check on interval
 	// onmount here used to prevent hot reloading from stacking multiple intervals
 	onMount(() => {
-		const TAU_Y = 0.4; // smaller = snappier, larger = floatier
+		const TAU_Y = 0.12; // smaller = snappier, larger = floatier
 		let raf;
 		let prev = performance.now();
 
@@ -227,7 +227,7 @@
 			if (e.button !== 0) return; // only allow left click
 			if (userPositionY != INTERNAL_PADDING) return; // 0 + INTERNAL_PADDING
 			if (collidedThereforeGameStarted) return;
-			goalPositionY += Y_JUMP * 1.5;
+			goalPositionY += Y_JUMP;
 		};
 
 		gameWindowRef.addEventListener('click', handleClick);
@@ -316,7 +316,7 @@
 				if (minIndex != -1) {
 					const lowestYPositionPX = bellsArr[minIndex].YPositionPX;
 
-					if (scrollingBellsStartingYPositionPX + lowestYPositionPX < 300) {
+					if (scrollingBellsStartingYPositionPX + lowestYPositionPX < 200) {
 						createNewBell(minIndex);
 					}
 				}
