@@ -53,7 +53,7 @@
 		const currentBellId = latestBellId;
 		const intervalId = setInterval(() => {
 			checkIfCollideWithBell(currentBellId);
-		}, 50);
+		}, 10);
 		const YPositionPX =
 			latestBellYPositionPX + Y_BETWEEN_BELLS_BASE_HEIGHT + YVariance;
 		bellsArr[bellIndex] = {
@@ -179,7 +179,7 @@
 						if (delta >= 0.2) {
 							userPositionY += delta;
 						} else {
-							wasAtPositionY = goalPositionY + 2;
+							wasAtPositionY = goalPositionY;
 							goalPositionY = 0; // simulate falling
 						}
 					} else {
@@ -299,8 +299,9 @@
 		}
 		const bellIndex = bellId % BELLS_MAX_COUNT;
 		clearInterval(bellsArr[bellIndex].intervalId);
+		goalPositionY =
+			bellsArr[bellIndex].YPositionPX + BELL_HITBOX_HEIGHT + Y_JUMP;
 		createNewBell(bellIndex);
-		goalPositionY += Y_JUMP;
 	};
 
 	onMount(() => {
