@@ -19,6 +19,8 @@
 	let xAxisMouseIntervalId;
 	let yAxisIntervalId;
 	let wasAtPositionY;
+	let collidedThereforeGameStarted = 0;
+	let gameNotStarterRemoveGroundLevelBellsIntervalId;
 
 	let goalPositionY = $state(0);
 	let mousePositionX = $state(undefined);
@@ -44,12 +46,17 @@
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	};
 
-	const createNewBell = () => {
+	const createNewBell = (bellIndex) => {
 		const { YPositionPX = 0 } = bellsArr[latestBellId % BELLS_MAX_COUNT] ?? {};
 		const YVariance = getRandomIntInclusive(0, Y_VARIANCE_AMOUNT);
 		latestBellId++;
-		bellsArr[latestBellId % BELLS_MAX_COUNT] = {
-			latestBellId,
+		const currentBellId = latestBellId;
+		const intervalId = setInterval(() => {
+			checkIfCollideWithBell(currentBellId);
+		}, 50);
+		bellsArr[bellIndex] = {
+			bellId: latestBellId,
+			intervalId,
 			YPositionPX: YPositionPX + Y_BETWEEN_BELLS_BASE_HEIGHT + YVariance,
 			XPositionPX: getRandomIntInclusive(
 				gameWindowDimensions.minXAxisValue,
@@ -62,7 +69,7 @@
 	onMount(() => {
 		setTimeout(() => {
 			for (let i = 0; i < BELLS_MAX_COUNT; i++) {
-				createNewBell();
+				createNewBell(i);
 			}
 		}, 1000);
 	});
@@ -218,7 +225,9 @@
 
 		const handleClick = (e) => {
 			if (e.button !== 0) return; // only allow left click
-			goalPositionY += Y_JUMP;
+			if (userPositionY != INTERNAL_PADDING) return; // 0 + INTERNAL_PADDING
+			if (collidedThereforeGameStarted) return;
+			goalPositionY += Y_JUMP * 1.5;
 		};
 
 		gameWindowRef.addEventListener('click', handleClick);
@@ -259,6 +268,61 @@
 			resizeObserver.disconnect();
 		};
 	});
+
+	const checkIfCollideWithBell = (bellId) => {
+		const bell = document.getElementById(`bell-${bellId}`);
+		const user = document.getElementById('user');
+		if (!bell || !user) return;
+
+		var rect1 = bell.getBoundingClientRect();
+		var rect2 = user.getBoundingClientRect();
+
+		// if collides
+		if (
+			!(
+				rect1.top > rect2.bottom ||
+				rect1.right < rect2.left ||
+				rect1.bottom < rect2.top ||
+				rect1.left > rect2.right
+			)
+		) {
+			handleCollide(bellId);
+		}
+	};
+
+	const handleCollide = (bellId) => {
+		if (!collidedThereforeGameStarted) {
+			collidedThereforeGameStarted = 1;
+		}
+		const bellIndex = bellId % BELLS_MAX_COUNT;
+		clearInterval(bellsArr[bellIndex].intervalId);
+		createNewBell(bellIndex);
+		goalPositionY += Y_JUMP;
+	};
+
+	onMount(() => {
+		gameNotStarterRemoveGroundLevelBellsIntervalId = setInterval(() => {
+			if (collidedThereforeGameStarted) {
+				clearInterval(gameNotStarterRemoveGroundLevelBellsIntervalId);
+			} else {
+				let minIndex = -1;
+				let minValue = Infinity;
+				for (let i = 0; i < bellsArr.length; i++) {
+					if (bellsArr[i].YPositionPX < minValue) {
+						minValue = bellsArr[i].YPositionPX;
+						minIndex = i;
+					}
+				}
+				if (minIndex != -1) {
+					const lowestYPositionPX = bellsArr[minIndex].YPositionPX;
+
+					if (scrollingBellsStartingYPositionPX + lowestYPositionPX < 300) {
+						createNewBell(minIndex);
+					}
+				}
+			}
+		}, 50);
+	});
 </script>
 
 <div class="w-screen h-screen p-4">
@@ -267,12 +331,14 @@
 		class="relative border border-gray-300 rounded-lg h-full w-full overflow-hidden"
 	>
 		<div
+			id="user"
 			class="absolute rounded-full bg-gray-500"
 			style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {userPositionY}px; left:{userPositionX}px"
 		></div>
 
 		{#each bellsArr as bell}
 			<div
+				id="bell-{bell.bellId}"
 				class="absolute bg-blue-500"
 				style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {scrollingBellsStartingYPositionPX +
 					bell.YPositionPX}px; left:{bell.XPositionPX}px"
