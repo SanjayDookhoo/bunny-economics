@@ -6,7 +6,12 @@
 	const Y_AXIS_MAX_DELTA = 15; // px
 	const USER_HITBOX_WIDTH = 64; // px
 	const USER_HITBOX_HEIGHT = 64; // px
-
+	const BELL_HITBOX_WIDTH = 64; // px
+	const BELL_HITBOX_HEIGHT = 64; // px
+	const BELLS_MAX_COUNT = 30;
+	const Y_VARIANCE_AMOUNT = 20; // px
+	const Y_BETWEEN_BELLS_BASE_HEIGHT = 200; // px
+	const BELLS_AUTO_FALL_SPEED_PER_SEC = 30;
 	const Y_JUMP = 200; // px
 
 	let xAxisCurrentInterval;
@@ -28,7 +33,59 @@
 		minYAxisValue: 0,
 		maxYAxisValue: 0,
 	});
+	let bellsArr = $state([]);
+	let latestBellId = $state(-1);
+	let scrollingBellsStartingYPositionPX = $state(400); // px
 	let gameWindowRef = $state();
+
+	const getRandomIntInclusive = (start, end) => {
+		const min = Math.ceil(start);
+		const max = Math.floor(end);
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	};
+
+	const createNewBell = () => {
+		const { YPositionPX = 0 } = bellsArr[latestBellId % BELLS_MAX_COUNT] ?? {};
+		const YVariance = getRandomIntInclusive(0, Y_VARIANCE_AMOUNT);
+		latestBellId++;
+		bellsArr[latestBellId % BELLS_MAX_COUNT] = {
+			latestBellId,
+			YPositionPX: YPositionPX + Y_BETWEEN_BELLS_BASE_HEIGHT + YVariance,
+			XPositionPX: getRandomIntInclusive(
+				gameWindowDimensions.minXAxisValue,
+				gameWindowDimensions.maxXAxisValue - USER_HITBOX_WIDTH
+			),
+		};
+	};
+
+	// initiate bells
+	onMount(() => {
+		setTimeout(() => {
+			for (let i = 0; i < BELLS_MAX_COUNT; i++) {
+				createNewBell();
+			}
+		}, 1000);
+	});
+
+	// bells scroll
+	onMount(() => {
+		let raf,
+			prev = performance.now();
+
+		const tick = (now) => {
+			const dt = Math.min(0.1, Math.max(0, (now - prev) / 1000)); // seconds
+			prev = now;
+
+			scrollingBellsStartingYPositionPX -= BELLS_AUTO_FALL_SPEED_PER_SEC * dt;
+
+			raf = requestAnimationFrame(tick);
+		};
+
+		raf = requestAnimationFrame(tick);
+		return () => cancelAnimationFrame(raf);
+	});
+
+	$inspect(bellsArr);
 
 	// check on interval
 	// onmount here used to prevent hot reloading from stacking multiple intervals
@@ -207,11 +264,19 @@
 <div class="w-screen h-screen p-4">
 	<div
 		bind:this={gameWindowRef}
-		class="border border-gray-300 rounded-lg h-full w-full relative"
+		class="relative border border-gray-300 rounded-lg h-full w-full overflow-hidden"
 	>
 		<div
 			class="absolute rounded-full bg-gray-500"
 			style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {userPositionY}px; left:{userPositionX}px"
 		></div>
+
+		{#each bellsArr as bell}
+			<div
+				class="absolute bg-blue-500"
+				style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {scrollingBellsStartingYPositionPX +
+					bell.YPositionPX}px; left:{bell.XPositionPX}px"
+			></div>
+		{/each}
 	</div>
 </div>
