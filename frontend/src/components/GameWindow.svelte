@@ -13,6 +13,7 @@
 	let yAxisCurrentInterval;
 	let xAxisMouseIntervalId;
 	let yAxisIntervalId;
+	let wasAtPositionY;
 
 	let goalPositionY = $state(0);
 	let mousePositionX = $state(undefined);
@@ -73,7 +74,7 @@
 	// check on interval
 	// onmount here used to prevent hot reloading from stacking multiple intervals
 	onMount(() => {
-		const TAU_Y = 0.12; // smaller = snappier, larger = floatier
+		const TAU_Y = 0.4; // smaller = snappier, larger = floatier
 		let raf;
 		let prev = performance.now();
 
@@ -92,19 +93,34 @@
 			// keep target inside bounds
 			goalPositionY = Math.max(minY, Math.min(maxY, goalPositionY));
 
-			// if current is out of bounds, snap (preserves your original behavior)
+			// if current is out of bounds
 			if (userPositionY < minY) {
 				userPositionY = goalPositionY = minY;
 			} else if (userPositionY > maxY) {
 				userPositionY = goalPositionY = maxY;
 			} else {
-				// exponential smoothing ease-out toward goal
-				const a = 1 - Math.exp(-dt / TAU_Y);
-				userPositionY += (goalPositionY - userPositionY) * a;
-
-				// snap when extremely close to avoid a long tiny tail
-				if (Math.abs(goalPositionY - userPositionY) < 0.001) {
-					userPositionY = goalPositionY;
+				if (Math.abs(goalPositionY - userPositionY) < 1) {
+					// snap when extremely close to avoid a long tiny tail
+					// userPositionY = goalPositionY;
+					goalPositionY = 0; // simulate falling
+				} else {
+					if (goalPositionY > userPositionY) {
+						const a = 1 - Math.exp(-dt / TAU_Y);
+						//console.log(a);
+						const delta = (goalPositionY - userPositionY) * a;
+						// console.log(delta);
+						if (delta >= 0.2) {
+							userPositionY += delta;
+						} else {
+							wasAtPositionY = goalPositionY + 2;
+							goalPositionY = 0; // simulate falling
+						}
+					} else {
+						const a = 1 - Math.exp(-dt / TAU_Y);
+						// console.log(a);
+						const delta = (wasAtPositionY - userPositionY) * a * -1;
+						userPositionY += delta;
+					}
 				}
 			}
 
