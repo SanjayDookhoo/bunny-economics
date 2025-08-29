@@ -21,6 +21,8 @@
 	let wasAtPositionY;
 	let collidedThereforeGameStarted = 0;
 	let gameNotStarterRemoveGroundLevelBellsIntervalId;
+	let latestBellId = -1;
+	let latestBellYPositionPX = 0;
 
 	let goalPositionY = $state(0);
 	let mousePositionX = $state(undefined);
@@ -36,7 +38,6 @@
 		maxYAxisValue: 0,
 	});
 	let bellsArr = $state([]);
-	let latestBellId = $state(-1);
 	let scrollingBellsStartingYPositionPX = $state(250); // px
 	let gameWindowRef = $state();
 
@@ -47,22 +48,24 @@
 	};
 
 	const createNewBell = (bellIndex) => {
-		const { YPositionPX = 0 } = bellsArr[latestBellId % BELLS_MAX_COUNT] ?? {};
 		const YVariance = getRandomIntInclusive(0, Y_VARIANCE_AMOUNT);
 		latestBellId++;
 		const currentBellId = latestBellId;
 		const intervalId = setInterval(() => {
 			checkIfCollideWithBell(currentBellId);
 		}, 50);
+		const YPositionPX =
+			latestBellYPositionPX + Y_BETWEEN_BELLS_BASE_HEIGHT + YVariance;
 		bellsArr[bellIndex] = {
 			bellId: latestBellId,
 			intervalId,
-			YPositionPX: YPositionPX + Y_BETWEEN_BELLS_BASE_HEIGHT + YVariance,
+			YPositionPX,
 			XPositionPX: getRandomIntInclusive(
 				gameWindowDimensions.minXAxisValue,
 				gameWindowDimensions.maxXAxisValue - USER_HITBOX_WIDTH
 			),
 		};
+		latestBellYPositionPX = YPositionPX;
 	};
 
 	// initiate bells
