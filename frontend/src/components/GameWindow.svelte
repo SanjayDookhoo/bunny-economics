@@ -28,6 +28,8 @@
 	let mousePositionX = $state(undefined);
 	let userPositionX = $state(undefined);
 	let userPositionY = $state(0);
+	let cameraPanningY = $state(0);
+	let cameraGoalY = $state(0);
 	let userFacingDirection = $state('right');
 	let gameWindowDimensions = $state({
 		width: 0,
@@ -40,6 +42,50 @@
 	let bellsArr = $state([]);
 	let scrollingBellsStartingYPositionPX = $state(250); // px
 	let gameWindowRef = $state();
+
+	const updateCamera = (dt, userPositionY) => {
+		const tau = 0.15; // smoothing: smaller = snappier
+		const deadMin = 0.2 * gameWindowDimensions.height; // 20% from bottom
+		const deadMax = 0.4 * gameWindowDimensions.height; // 40% from bottom
+
+		// Where is the player on screen (from bottom)?
+		const playerScreenY = userPositionY - cameraPanningY;
+
+		// Desired camera y (only change if player left the band)
+		let cameraGoalY = cameraPanningY;
+		if (userPositionY < deadMin) {
+			cameraGoalY = userPositionY - deadMin; // push camera down
+		} else if (userPositionY > deadMax) {
+			cameraGoalY = userPositionY - deadMax; // push camera up
+		}
+
+		// Clamp camera so we don't scroll past world bounds
+		const camMin = gameWindowDimensions.minYAxisValue;
+		const camMax = Math.max(
+			gameWindowDimensions.maxYAxisValue,
+			gameWindowDimensions.minYAxisValue - gameWindowDimensions.height
+		);
+		cameraGoalY = Math.min(camMax, Math.max(camMin, cameraGoalY));
+
+		// Smooth move: exponential smoothing toward desired
+		const a = 1 - Math.exp(-dt / tau);
+		cameraPanningY += (cameraGoalY - cameraPanningY) * a;
+	};
+
+	onMount(() => {
+		let raf,
+			prev = performance.now();
+		function frame(now) {
+			const dt = Math.min(0.1, (now - prev) / 1000);
+			prev = now;
+
+			updateCamera(dt, userPositionY);
+
+			requestAnimationFrame(frame);
+		}
+		raf = requestAnimationFrame(frame);
+		return () => cancelAnimationFrame(raf);
+	});
 
 	const getRandomIntInclusive = (start, end) => {
 		const min = Math.ceil(start);
@@ -336,7 +382,8 @@
 		<div
 			id="user"
 			class="absolute rounded-full bg-gray-500"
-			style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {userPositionY}px; left:{userPositionX}px"
+			style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {userPositionY -
+				cameraPanningY}px; left:{userPositionX}px"
 		></div>
 
 		{#each bellsArr as bell}
@@ -344,7 +391,8 @@
 				id="bell-{bell.bellId}"
 				class="absolute bg-blue-500"
 				style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {scrollingBellsStartingYPositionPX +
-					bell.YPositionPX}px; left:{bell.XPositionPX}px"
+					bell.YPositionPX -
+					cameraPanningY}px; left:{bell.XPositionPX}px"
 			></div>
 		{/each}
 	</div>
