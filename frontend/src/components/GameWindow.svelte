@@ -1,7 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
 
-	const INTERNAL_PADDING = 30; // px
 	const X_AXIS_MAX_DELTA = 15; // px
 	const Y_AXIS_MAX_DELTA = 15; // px
 	const USER_HITBOX_WIDTH = 64; // px
@@ -13,6 +12,7 @@
 	const Y_BETWEEN_BELLS_BASE_HEIGHT = 150; // px
 	const BELLS_AUTO_FALL_SPEED_PER_SEC = 30;
 	const Y_JUMP = 370; // px
+	const MAX_FREE_FALL_SPEED = -35;
 
 	let xAxisCurrentInterval;
 	let yAxisCurrentInterval;
@@ -23,6 +23,7 @@
 	let gameNotStarterRemoveGroundLevelBellsIntervalId;
 	let latestBellId = -1;
 	let latestBellYPositionPX = 0;
+	let inMaxFreeFallSpeed = 0;
 
 	let goalPositionY = $state(0);
 	let mousePositionX = $state(undefined);
@@ -44,8 +45,9 @@
 	let gameWindowRef = $state();
 
 	const updateCamera = (dt, userPositionY) => {
-		const tau = 0.15; // smoothing: smaller = snappier
-		const deadMin = 0.2 * gameWindowDimensions.height; // 20% from bottom
+		const tau = inMaxFreeFallSpeed ? 0.1 : 0.15; // smoothing: smaller = snappier, when in freefall make the camera snap faster, so the user doesnt go out of bounds because the camera cant keep up with the user falling
+		const deadMin =
+			(userPositionY > 250 ? 0.2 : 0) * gameWindowDimensions.height; // 20% from bottom, the userPositionY check ensures that when the game starts, the user remains planted on the ground, instead of the camera going lower than ground attempting to keep the user at the 20%  point
 		const deadMax = 0.4 * gameWindowDimensions.height; // 40% from bottom
 
 		// Where is the player on screen (from bottom)?
@@ -58,14 +60,6 @@
 		} else if (userPositionY > deadMax) {
 			cameraGoalY = userPositionY - deadMax; // push camera up
 		}
-
-		// Clamp camera so we don't scroll past world bounds
-		const camMin = gameWindowDimensions.minYAxisValue;
-		const camMax = Math.max(
-			gameWindowDimensions.maxYAxisValue,
-			gameWindowDimensions.minYAxisValue - gameWindowDimensions.height
-		);
-		cameraGoalY = Math.min(camMax, Math.max(camMin, cameraGoalY));
 
 		// Smooth move: exponential smoothing toward desired
 		const a = 1 - Math.exp(-dt / tau);
@@ -141,7 +135,7 @@
 		return () => cancelAnimationFrame(raf);
 	});
 
-	$inspect(bellsArr);
+	// $inspect(bellsArr);
 
 	// check on interval
 	// onmount here used to prevent hot reloading from stacking multiple intervals
@@ -203,37 +197,28 @@
 			const minY = gameWindowDimensions.minYAxisValue;
 			const maxY = gameWindowDimensions.maxYAxisValue - USER_HITBOX_WIDTH;
 
-			// keep target inside bounds
-			goalPositionY = Math.max(minY, Math.min(maxY, goalPositionY));
-
-			// if current is out of bounds
-			if (userPositionY < minY) {
-				userPositionY = goalPositionY = minY;
-			} else if (userPositionY > maxY) {
-				userPositionY = goalPositionY = maxY;
+			if (Math.abs(goalPositionY - userPositionY) < 1) {
+				// snap when extremely close to avoid a long tiny tail
+				// userPositionY = goalPositionY;
+				goalPositionY = 0; // simulate falling
 			} else {
-				if (Math.abs(goalPositionY - userPositionY) < 1) {
-					// snap when extremely close to avoid a long tiny tail
-					// userPositionY = goalPositionY;
-					goalPositionY = 0; // simulate falling
-				} else {
-					if (goalPositionY > userPositionY) {
-						const a = 1 - Math.exp(-dt / TAU_Y);
-						//console.log(a);
-						const delta = (goalPositionY - userPositionY) * a;
-						// console.log(delta);
-						if (delta >= 0.2) {
-							userPositionY += delta;
-						} else {
-							wasAtPositionY = goalPositionY;
-							goalPositionY = 0; // simulate falling
-						}
-					} else {
-						const a = 1 - Math.exp(-dt / TAU_Y);
-						// console.log(a);
-						const delta = (wasAtPositionY - userPositionY) * a * -1;
+				if (goalPositionY > userPositionY) {
+					const a = 1 - Math.exp(-dt / TAU_Y);
+					const delta = (goalPositionY - userPositionY) * a;
+					if (delta >= 0.2) {
 						userPositionY += delta;
+					} else {
+						wasAtPositionY = goalPositionY;
+						goalPositionY = 0; // simulate falling
 					}
+				} else {
+					const a = 1 - Math.exp(-dt / TAU_Y);
+					const _delta = (wasAtPositionY - userPositionY) * a * -1;
+					const delta = Math.max(MAX_FREE_FALL_SPEED, _delta); // min fall speed capped
+					if (delta == MAX_FREE_FALL_SPEED) {
+						inMaxFreeFallSpeed = 1;
+					}
+					userPositionY += delta;
 				}
 			}
 
@@ -243,6 +228,8 @@
 		raf = requestAnimationFrame(tick);
 		return () => cancelAnimationFrame(raf);
 	});
+
+	$inspect(goalPositionY);
 
 	// handle horizontal mouse move
 	onMount(() => {
@@ -274,7 +261,7 @@
 
 		const handleClick = (e) => {
 			if (e.button !== 0) return; // only allow left click
-			if (userPositionY != INTERNAL_PADDING) return; // 0 + INTERNAL_PADDING
+			if (userPositionY != 0) return;
 			if (collidedThereforeGameStarted) return;
 			goalPositionY += Y_JUMP;
 		};
@@ -299,10 +286,10 @@
 			gameWindowDimensions = {
 				width: rect.width,
 				height: rect.height,
-				minXAxisValue: INTERNAL_PADDING,
-				maxXAxisValue: rect.width - INTERNAL_PADDING,
-				minYAxisValue: INTERNAL_PADDING,
-				maxYAxisValue: rect.height - INTERNAL_PADDING,
+				minXAxisValue: 0,
+				maxXAxisValue: rect.width,
+				minYAxisValue: 0,
+				maxYAxisValue: rect.height,
 			};
 		};
 
