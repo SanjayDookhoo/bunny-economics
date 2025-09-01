@@ -135,7 +135,7 @@
 		return () => cancelAnimationFrame(raf);
 	});
 
-	// $inspect(bellsArr);
+	$inspect(bellsArr);
 
 	// check on interval
 	// onmount here used to prevent hot reloading from stacking multiple intervals
@@ -229,7 +229,7 @@
 		return () => cancelAnimationFrame(raf);
 	});
 
-	$inspect(goalPositionY);
+	// $inspect(goalPositionY);
 
 	// handle horizontal mouse move
 	onMount(() => {
@@ -330,7 +330,7 @@
 		if (!collidedThereforeGameStarted) {
 			collidedThereforeGameStarted = 1;
 		}
-		const bellIndex = bellId % BELLS_MAX_COUNT;
+		const bellIndex = bellsArr.findIndex((e) => e.bellId == bellId);
 		clearInterval(bellsArr[bellIndex].intervalId);
 		goalPositionY = userPositionY + BELL_HITBOX_HEIGHT + Y_JUMP;
 		createNewBell(bellIndex);
@@ -355,6 +355,17 @@
 					if (scrollingBellsStartingYPositionPX + lowestYPositionPX < 200) {
 						createNewBell(minIndex);
 					}
+				}
+			}
+		}, 50);
+	});
+
+	// remove all bells that is generally lower thana 5 bells below current userPosition
+	onMount(() => {
+		setInterval(() => {
+			for (const [index, val] of bellsArr.entries()) {
+				if (val.YPositionPX < userPositionY - Y_BETWEEN_BELLS_BASE_HEIGHT * 5) {
+					createNewBell(index);
 				}
 			}
 		}, 50);
