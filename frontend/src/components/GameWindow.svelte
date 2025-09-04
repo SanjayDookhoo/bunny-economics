@@ -13,6 +13,7 @@
 	const BELLS_AUTO_FALL_SPEED_PER_SEC = 30;
 	const Y_JUMP = 370; // px
 	const MAX_FREE_FALL_SPEED = -35;
+	const HORIZONTAL_INTERACTIVE_PADDING = 40; // px
 
 	let xAxisCurrentInterval;
 	let yAxisCurrentInterval;
@@ -101,8 +102,10 @@
 			intervalId,
 			YPositionPX,
 			XPositionPX: getRandomIntInclusive(
-				gameWindowDimensions.minXAxisValue,
-				gameWindowDimensions.maxXAxisValue - USER_HITBOX_WIDTH
+				gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING,
+				gameWindowDimensions.maxXAxisValue -
+					USER_HITBOX_WIDTH -
+					HORIZONTAL_INTERACTIVE_PADDING
 			),
 		};
 		latestBellYPositionPX = YPositionPX;
@@ -149,8 +152,12 @@
 			prev = now;
 
 			if (userPositionX !== undefined && mousePositionX !== undefined) {
-				const minX = gameWindowDimensions.minXAxisValue;
-				const maxX = gameWindowDimensions.maxXAxisValue - USER_HITBOX_WIDTH;
+				const minX =
+					gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING;
+				const maxX =
+					gameWindowDimensions.maxXAxisValue -
+					USER_HITBOX_WIDTH -
+					HORIZONTAL_INTERACTIVE_PADDING;
 
 				// clamp goal to bounds
 				mousePositionX = Math.max(minX, Math.min(maxX, mousePositionX));
