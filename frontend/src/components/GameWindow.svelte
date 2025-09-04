@@ -8,7 +8,7 @@
 	const USER_HITBOX_HEIGHT = 64; // px
 	const BELL_HITBOX_WIDTH = 64; // px
 	const BELL_HITBOX_HEIGHT = 64; // px
-	const BELLS_MAX_COUNT = 30;
+	const BELLS_MAX_COUNT = 14;
 	const Y_VARIANCE_AMOUNT = 20; // px
 	const Y_BETWEEN_BELLS_BASE_HEIGHT = 150; // px
 	const BELLS_AUTO_FALL_SPEED_PER_SEC = 30;
@@ -18,7 +18,7 @@
 	const STARBURST_HEIGHT_RANGE = 50; // px
 	const STARBURST_COUNT_PER_RANGE = 3; // px
 	const DESPAWN_BELLS_BELOW_CURRENT_USER_LOCATION_BELLS = 6;
-	const DESPAWN_STARBURST_CURRENT_USER_LOCATION_RANGE = 18;
+	const DESPAWN_STARBURST_OUT_OF_YPX_RANGE = 800;
 	const STARBURST_BASE_HEIGHT_AND_WIDTH = 15; // px
 	const STARBURST_BASE_OPACITY = 15;
 
@@ -29,8 +29,8 @@
 	let wasAtPositionY;
 	let collidedThereforeGameStarted = 0;
 	let gameNotStarterRemoveGroundLevelBellsIntervalId;
-	let latestBellId = -1;
-	let latestStarburstId = -1;
+	let latestBellId = 1;
+	let latestStarburstId = 1;
 	let latestBellYPositionPX = 0;
 	let inMaxFreeFallSpeed = 0;
 
@@ -128,29 +128,49 @@
 	// initiate bells
 	onMount(() => {
 		setTimeout(() => {
-			for (let i = 0; i < BELLS_MAX_COUNT; i++) {
-				createNewBell(i);
+			for (let index = 0; index < BELLS_MAX_COUNT; index++) {
+				createNewBell(index);
 			}
 		}, 1000);
 	});
 
-	const createNewStarburst = (starburstIndex) => {
+	const createNewStarburst = ({ index: starburstIndex, isAscending }) => {
+		let starburst;
 		const YVariance = getRandomIntInclusive(0, Y_VARIANCE_AMOUNT);
-		latestStarburstId++;
-		const starburst = {
-			starburstId: latestStarburstId,
-			YPositionPX: getRandomIntInclusive(
-				latestStarburstId * STARBURST_HEIGHT_RANGE,
-				latestStarburstId * (STARBURST_HEIGHT_RANGE + 1)
-			),
-			XPositionPX: getRandomIntInclusive(
-				gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING,
-				gameWindowDimensions.maxXAxisValue -
-					USER_HITBOX_WIDTH -
-					HORIZONTAL_INTERACTIVE_PADDING
-			),
-			multiplier: getRandomIntInclusive(1, 2),
-		};
+		if (isAscending) {
+			latestStarburstId++;
+			starburst = {
+				starburstId: crypto.randomUUID(),
+				YPositionPX: getRandomIntInclusive(
+					latestStarburstId * STARBURST_HEIGHT_RANGE,
+					latestStarburstId * (STARBURST_HEIGHT_RANGE + 1)
+				),
+				XPositionPX: getRandomIntInclusive(
+					gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING,
+					gameWindowDimensions.maxXAxisValue -
+						USER_HITBOX_WIDTH -
+						HORIZONTAL_INTERACTIVE_PADDING
+				),
+				multiplier: getRandomIntInclusive(1, 2),
+			};
+		} else {
+			latestStarburstId--;
+			starburst = {
+				starburstId: crypto.randomUUID(),
+				YPositionPX: getRandomIntInclusive(
+					(latestStarburstId - BELLS_MAX_COUNT) * STARBURST_HEIGHT_RANGE,
+					(latestStarburstId - BELLS_MAX_COUNT) * (STARBURST_HEIGHT_RANGE + 1)
+				),
+				XPositionPX: getRandomIntInclusive(
+					gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING,
+					gameWindowDimensions.maxXAxisValue -
+						USER_HITBOX_WIDTH -
+						HORIZONTAL_INTERACTIVE_PADDING
+				),
+				multiplier: getRandomIntInclusive(1, 2),
+			};
+		}
+
 		if (starburstsArr[starburstIndex]) {
 			starburstsArr[starburstIndex] = starburst;
 		} else {
@@ -161,8 +181,12 @@
 	// initiate starburst
 	onMount(() => {
 		setTimeout(() => {
-			for (let i = 0; i < BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE; i++) {
-				createNewStarburst(i);
+			for (
+				let index = 0;
+				index < BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE;
+				index++
+			) {
+				createNewStarburst({ index, isAscending: true });
 			}
 		}, 1000);
 	});
@@ -430,17 +454,26 @@
 		}, 50);
 	});
 
-	// remove all starburst that is generally lower than DESPAWN_STARBURST_CURRENT_USER_LOCATION_RANGE range below current userPosition
+	// remove all starburst that is generally lower than DESPAWN_STARBURST_OUT_OF_YPX_RANGE range below current userPosition
 	onMount(() => {
 		setInterval(() => {
-			for (const [index, val] of starburstsArr.entries()) {
-				if (
-					val.YPositionPX <
-					userPositionY -
-						STARBURST_HEIGHT_RANGE *
-							DESPAWN_STARBURST_CURRENT_USER_LOCATION_RANGE
-				) {
-					createNewStarburst(index);
+			if (!inMaxFreeFallSpeed) {
+				for (const [index, val] of starburstsArr.entries()) {
+					if (
+						val.YPositionPX <
+						userPositionY - DESPAWN_STARBURST_OUT_OF_YPX_RANGE
+					) {
+						createNewStarburst({ index, isAscending: true });
+					}
+				}
+			} else {
+				for (const [index, val] of starburstsArr.entries()) {
+					if (
+						val.YPositionPX >
+						userPositionY + DESPAWN_STARBURST_OUT_OF_YPX_RANGE
+					) {
+						createNewStarburst({ index, isAscending: false });
+					}
 				}
 			}
 		}, 50);
