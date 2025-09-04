@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+	import Starburst from './Starburst.svelte';
 
 	const X_AXIS_MAX_DELTA = 15; // px
 	const Y_AXIS_MAX_DELTA = 15; // px
@@ -14,6 +15,12 @@
 	const Y_JUMP = 370; // px
 	const MAX_FREE_FALL_SPEED = -35;
 	const HORIZONTAL_INTERACTIVE_PADDING = 40; // px
+	const STARBURST_HEIGHT_RANGE = 50; // px
+	const STARBURST_COUNT_PER_RANGE = 3; // px
+	const DESPAWN_BELLS_BELOW_CURRENT_USER_LOCATION_BELLS = 6;
+	const DESPAWN_STARBURST_CURRENT_USER_LOCATION_RANGE = 18;
+	const STARBURST_BASE_HEIGHT_AND_WIDTH = 15; // px
+	const STARBURST_BASE_OPACITY = 15;
 
 	let xAxisCurrentInterval;
 	let yAxisCurrentInterval;
@@ -23,6 +30,7 @@
 	let collidedThereforeGameStarted = 0;
 	let gameNotStarterRemoveGroundLevelBellsIntervalId;
 	let latestBellId = -1;
+	let latestStarburstId = -1;
 	let latestBellYPositionPX = 0;
 	let inMaxFreeFallSpeed = 0;
 
@@ -42,6 +50,7 @@
 		maxYAxisValue: 0,
 	});
 	let bellsArr = $state([]);
+	let starburstsArr = $state([]);
 	let scrollingBellsStartingYPositionPX = $state(250); // px
 	let gameWindowRef = $state();
 
@@ -97,7 +106,7 @@
 		}, 10);
 		const YPositionPX =
 			latestBellYPositionPX + Y_BETWEEN_BELLS_BASE_HEIGHT + YVariance;
-		bellsArr[bellIndex] = {
+		const bell = {
 			bellId: latestBellId,
 			intervalId,
 			YPositionPX,
@@ -108,6 +117,11 @@
 					HORIZONTAL_INTERACTIVE_PADDING
 			),
 		};
+		if (bellsArr[bellIndex]) {
+			bellsArr[bellIndex] = bell;
+		} else {
+			bellsArr.push(bell);
+		}
 		latestBellYPositionPX = YPositionPX;
 	};
 
@@ -116,6 +130,39 @@
 		setTimeout(() => {
 			for (let i = 0; i < BELLS_MAX_COUNT; i++) {
 				createNewBell(i);
+			}
+		}, 1000);
+	});
+
+	const createNewStarburst = (starburstIndex) => {
+		const YVariance = getRandomIntInclusive(0, Y_VARIANCE_AMOUNT);
+		latestStarburstId++;
+		const starburst = {
+			starburstId: latestStarburstId,
+			YPositionPX: getRandomIntInclusive(
+				latestStarburstId * STARBURST_HEIGHT_RANGE,
+				latestStarburstId * (STARBURST_HEIGHT_RANGE + 1)
+			),
+			XPositionPX: getRandomIntInclusive(
+				gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING,
+				gameWindowDimensions.maxXAxisValue -
+					USER_HITBOX_WIDTH -
+					HORIZONTAL_INTERACTIVE_PADDING
+			),
+			multiplier: getRandomIntInclusive(1, 2),
+		};
+		if (starburstsArr[starburstIndex]) {
+			starburstsArr[starburstIndex] = starburst;
+		} else {
+			starburstsArr.push(starburst);
+		}
+	};
+
+	// initiate starburst
+	onMount(() => {
+		setTimeout(() => {
+			for (let i = 0; i < BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE; i++) {
+				createNewStarburst(i);
 			}
 		}, 1000);
 	});
@@ -138,7 +185,7 @@
 		return () => cancelAnimationFrame(raf);
 	});
 
-	$inspect(bellsArr);
+	// $inspect(bellsArr);
 
 	// check on interval
 	// onmount here used to prevent hot reloading from stacking multiple intervals
@@ -367,12 +414,33 @@
 		}, 50);
 	});
 
-	// remove all bells that is generally lower thana 5 bells below current userPosition
+	// remove all bells that is generally lower than DESPAWN_BELLS_BELOW_CURRENT_USER_LOCATION_BELLS bells below current userPosition
 	onMount(() => {
 		setInterval(() => {
 			for (const [index, val] of bellsArr.entries()) {
-				if (val.YPositionPX < userPositionY - Y_BETWEEN_BELLS_BASE_HEIGHT * 5) {
+				if (
+					val.YPositionPX <
+					userPositionY -
+						Y_BETWEEN_BELLS_BASE_HEIGHT *
+							DESPAWN_BELLS_BELOW_CURRENT_USER_LOCATION_BELLS
+				) {
 					createNewBell(index);
+				}
+			}
+		}, 50);
+	});
+
+	// remove all starburst that is generally lower than DESPAWN_STARBURST_CURRENT_USER_LOCATION_RANGE range below current userPosition
+	onMount(() => {
+		setInterval(() => {
+			for (const [index, val] of starburstsArr.entries()) {
+				if (
+					val.YPositionPX <
+					userPositionY -
+						STARBURST_HEIGHT_RANGE *
+							DESPAWN_STARBURST_CURRENT_USER_LOCATION_RANGE
+				) {
+					createNewStarburst(index);
 				}
 			}
 		}, 50);
@@ -383,6 +451,19 @@
 	bind:this={gameWindowRef}
 	class="relative rounded-lg grow w-full overflow-hidden bg-gray-800"
 >
+	{#each starburstsArr as starburst}
+		<div
+			class="text-white absolute"
+			style="height: {STARBURST_BASE_HEIGHT_AND_WIDTH *
+				starburst.multiplier}px; width: {STARBURST_BASE_HEIGHT_AND_WIDTH *
+				starburst.multiplier}px; bottom: {starburst.YPositionPX -
+				cameraPanningY}px; left:{starburst.XPositionPX}px; opacity: {STARBURST_BASE_OPACITY *
+				starburst.multiplier}%;"
+		>
+			<Starburst />
+		</div>
+	{/each}
+
 	<div
 		id="user"
 		class="absolute rounded-full bg-gray-500"
