@@ -379,26 +379,24 @@
 	});
 </script>
 
-<div class="w-screen h-screen p-4">
+<div
+	bind:this={gameWindowRef}
+	class="relative rounded-lg grow w-full overflow-hidden bg-gray-800"
+>
 	<div
-		bind:this={gameWindowRef}
-		class="relative border border-gray-300 rounded-lg h-full w-full overflow-hidden"
-	>
-		<div
-			id="user"
-			class="absolute rounded-full bg-gray-500"
-			style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {userPositionY -
-				cameraPanningY}px; left:{userPositionX}px"
-		></div>
+		id="user"
+		class="absolute rounded-full bg-gray-500"
+		style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {userPositionY -
+			cameraPanningY}px; left:{userPositionX}px"
+	></div>
 
-		{#each bellsArr as bell}
-			<div
-				id="bell-{bell.bellId}"
-				class="absolute bg-blue-500"
-				style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {scrollingBellsStartingYPositionPX +
-					bell.YPositionPX -
-					cameraPanningY}px; left:{bell.XPositionPX}px"
-			></div>
-		{/each}
-	</div>
+	{#each bellsArr as bell}
+		<div
+			id="bell-{bell.bellId}"
+			class="absolute bg-blue-500"
+			style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {scrollingBellsStartingYPositionPX +
+				bell.YPositionPX -
+				cameraPanningY}px; left:{bell.XPositionPX}px"
+		></div>
+	{/each}
 </div>
