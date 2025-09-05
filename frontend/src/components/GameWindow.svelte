@@ -414,6 +414,7 @@
 		const bellIndex = bellsArr.findIndex((e) => e.bellId == bellId);
 		clearInterval(bellsArr[bellIndex].intervalId);
 		goalPositionY = userPositionY + BELL_HITBOX_HEIGHT + Y_JUMP;
+		inMaxFreeFallSpeed = 0;
 		createNewBell(bellIndex);
 	};
 
