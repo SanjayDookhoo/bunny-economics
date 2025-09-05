@@ -21,6 +21,7 @@
 	const DESPAWN_STARBURST_OUT_OF_YPX_RANGE = 800;
 	const STARBURST_BASE_HEIGHT_AND_WIDTH = 15; // px
 	const STARBURST_BASE_OPACITY = 15;
+	const STARBURST_ID_START = 5;
 
 	let xAxisCurrentInterval;
 	let yAxisCurrentInterval;
@@ -30,7 +31,7 @@
 	let collidedThereforeGameStarted = 0;
 	let gameNotStarterRemoveGroundLevelBellsIntervalId;
 	let latestBellId = 1;
-	let latestStarburstId = 1;
+	let latestStarburstId = STARBURST_ID_START;
 	let latestBellYPositionPX = 0;
 	let inMaxFreeFallSpeed = 0;
 
@@ -158,8 +159,10 @@
 			starburst = {
 				starburstId: crypto.randomUUID(),
 				YPositionPX: getRandomIntInclusive(
-					(latestStarburstId - BELLS_MAX_COUNT) * STARBURST_HEIGHT_RANGE,
-					(latestStarburstId - BELLS_MAX_COUNT) * (STARBURST_HEIGHT_RANGE + 1)
+					(latestStarburstId - BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE) *
+						STARBURST_HEIGHT_RANGE,
+					(latestStarburstId - BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE) *
+						(STARBURST_HEIGHT_RANGE + 1)
 				),
 				XPositionPX: getRandomIntInclusive(
 					gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING,
@@ -469,10 +472,15 @@
 			} else {
 				for (const [index, val] of starburstsArr.entries()) {
 					if (
-						val.YPositionPX >
-						userPositionY + DESPAWN_STARBURST_OUT_OF_YPX_RANGE
+						latestStarburstId >
+						BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE + STARBURST_ID_START
 					) {
-						createNewStarburst({ index, isAscending: false });
+						if (
+							val.YPositionPX >
+							userPositionY + DESPAWN_STARBURST_OUT_OF_YPX_RANGE
+						) {
+							createNewStarburst({ index, isAscending: false });
+						}
 					}
 				}
 			}
