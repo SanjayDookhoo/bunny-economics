@@ -92,14 +92,12 @@
 		return () => cancelAnimationFrame(raf);
 	});
 
-	const getRandomIntInclusive = (start, end) => {
-		const min = Math.ceil(start);
-		const max = Math.floor(end);
-		return Math.floor(Math.random() * (max - min + 1)) + min;
+	const getRandomFloatInclusive = (start, end) => {
+		return Math.random() * (end - start) + start;
 	};
 
 	const createNewBell = (bellIndex) => {
-		const YVariance = getRandomIntInclusive(0, Y_VARIANCE_AMOUNT);
+		const YVariance = getRandomFloatInclusive(0, Y_VARIANCE_AMOUNT);
 		latestBellId++;
 		const currentBellId = latestBellId;
 		const intervalId = setInterval(() => {
@@ -111,7 +109,7 @@
 			bellId: latestBellId,
 			intervalId,
 			YPositionPX,
-			XPositionPX: getRandomIntInclusive(
+			XPositionPX: getRandomFloatInclusive(
 				gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING,
 				gameWindowDimensions.maxXAxisValue -
 					USER_HITBOX_WIDTH -
@@ -137,40 +135,40 @@
 
 	const createNewStarburst = ({ index: starburstIndex, isAscending }) => {
 		let starburst;
-		const YVariance = getRandomIntInclusive(0, Y_VARIANCE_AMOUNT);
+		const YVariance = getRandomFloatInclusive(0, Y_VARIANCE_AMOUNT);
 		if (isAscending) {
 			latestStarburstId++;
 			starburst = {
 				starburstId: crypto.randomUUID(),
-				YPositionPX: getRandomIntInclusive(
+				YPositionPX: getRandomFloatInclusive(
 					latestStarburstId * STARBURST_HEIGHT_RANGE,
 					latestStarburstId * (STARBURST_HEIGHT_RANGE + 1)
 				),
-				XPositionPX: getRandomIntInclusive(
+				XPositionPX: getRandomFloatInclusive(
 					gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING,
 					gameWindowDimensions.maxXAxisValue -
 						USER_HITBOX_WIDTH -
 						HORIZONTAL_INTERACTIVE_PADDING
 				),
-				multiplier: getRandomIntInclusive(1, 2),
+				multiplier: getRandomFloatInclusive(1, 2),
 			};
 		} else {
 			latestStarburstId--;
 			starburst = {
 				starburstId: crypto.randomUUID(),
-				YPositionPX: getRandomIntInclusive(
+				YPositionPX: getRandomFloatInclusive(
 					(latestStarburstId - BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE) *
 						STARBURST_HEIGHT_RANGE,
 					(latestStarburstId - BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE) *
 						(STARBURST_HEIGHT_RANGE + 1)
 				),
-				XPositionPX: getRandomIntInclusive(
+				XPositionPX: getRandomFloatInclusive(
 					gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING,
 					gameWindowDimensions.maxXAxisValue -
 						USER_HITBOX_WIDTH -
 						HORIZONTAL_INTERACTIVE_PADDING
 				),
-				multiplier: getRandomIntInclusive(1, 2),
+				multiplier: getRandomFloatInclusive(1, 2),
 			};
 		}
 
