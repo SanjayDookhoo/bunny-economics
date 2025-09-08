@@ -39,6 +39,7 @@
 	let latestStarburstId = STARBURST_ID_START;
 	let latestBellYPositionPX = 0;
 	let inMaxFreeFallSpeed = 0;
+	let userInteracted = false;
 
 	let goalPositionY = $state(0);
 	let mousePositionX = $state(undefined);
@@ -59,6 +60,9 @@
 	let starburstsArr = $state([]);
 	let scrollingBellsStartingYPositionPX = $state(250); // px
 	let gameWindowRef = $state();
+	let volume = $state(0.5);
+	let audioContext;
+	let buffer;
 
 	const updateCamera = (dt, userPositionY) => {
 		const tau = inMaxFreeFallSpeed ? 0 : 0.15; // smoothing: smaller = snappier, when in freefall make the camera snap faster, so the user doesnt go out of bounds because the camera cant keep up with the user falling
@@ -419,6 +423,11 @@
 		if (!collidedThereforeGameStarted) {
 			collidedThereforeGameStarted = 1;
 		}
+
+		const audio = new Audio('./collectbell.mp3');
+		audio.volume = volume;
+		audio.play();
+
 		const bellIndex = bellsArr.findIndex((e) => e.bellId == bellId);
 		clearInterval(bellsArr[bellIndex].intervalId);
 		goalPositionY = userPositionY + BELL_HITBOX_HEIGHT + Y_JUMP;
@@ -498,11 +507,54 @@
 			}
 		}, 50);
 	});
+
+	// Chrome (and most modern browsers) block autoplay of audio/video with sound until the user has interacted with the page
+	// loads into buffer and plays from buffer to reduce the delay of autoplay restarting the loop
+	onMount(() => {
+		const interactedWithPage = () => {
+			if (!userInteracted) {
+				userInteracted = true;
+				async function loadAudio() {
+					if (!audioContext) {
+						audioContext = new (window.AudioContext ||
+							window.webkitAudioContext)();
+					}
+
+					// Fetch and decode
+					const response = await fetch('./idle.mp3'); // adjust path if needed
+					const arrayBuffer = await response.arrayBuffer();
+					buffer = await audioContext.decodeAudioData(arrayBuffer);
+				}
+
+				async function playLoop() {
+					if (!buffer) await loadAudio();
+
+					const source = audioContext.createBufferSource();
+					source.buffer = buffer;
+					source.loop = true;
+					source.connect(audioContext.destination);
+					source.start(0);
+				}
+				playLoop();
+			}
+		};
+
+		// Listen for the first valid interaction
+		document.addEventListener('click', interactedWithPage);
+		document.addEventListener('keydown', interactedWithPage);
+		document.addEventListener('touchstart', interactedWithPage);
+
+		return () => {
+			document.removeEventListener('click', interactedWithPage);
+			document.removeEventListener('keydown', interactedWithPage);
+			document.removeEventListener('touchstart', interactedWithPage);
+		};
+	});
 </script>
 
 <div
 	bind:this={gameWindowRef}
-	class="relative rounded-lg grow w-full h-full overflow-hidden bg-gray-800"
+	class="relative rounded-lg grow w-full h-full overflow-hidden bg-gray-800 select-none"
 >
 	{#each starburstsArr as starburst}
 		<div
