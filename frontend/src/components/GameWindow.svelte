@@ -513,19 +513,12 @@
 		</div>
 	{/each}
 	<div
-		class="absolute w-full h-[{DESPAWN_BELL_APPROACHING_GROUND_AT_PX}px]"
-		style="bottom: {-cameraPanningY}px;"
+		class="absolute w-full flex items-center h-[{DESPAWN_BELL_APPROACHING_GROUND_AT_PX}px]"
+		style="bottom: {-cameraPanningY - 150}px;"
 	>
-		<img
-			src={forest}
-			class="absolute bottom-[-150px] w-[75%] left-[-20px]"
-			alt="forest 1"
-		/>
-		<img
-			src={forest}
-			class="absolute bottom-[-150px] w-[75%] right-[-20px]"
-			alt="forest 2"
-		/>
+		<img src={forest} class="w-[850px]" alt="forest 1" />
+		<img src={forest} class="w-[850px]" alt="forest 2" />
+		<img src={forest} class="w-[850px]" alt="forest 2" />
 	</div>
 
 	<div
