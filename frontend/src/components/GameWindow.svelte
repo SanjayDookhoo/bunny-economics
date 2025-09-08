@@ -548,8 +548,8 @@
 <style>
 	.swing-bell {
 		display: block;
-		width: 128px;
-		height: 128px;
+		width: 64px;
+		height: 64px;
 		animation: swing 2s linear infinite;
 		transform-origin: 50% 0%; /* pivot at top center */
 	}
