@@ -3,6 +3,8 @@
 	import Starburst from './Starburst.svelte';
 	import forest from '../assets/forest.png';
 
+	let { scale } = $props();
+
 	const X_AXIS_MAX_DELTA = 15; // px
 	const Y_AXIS_MAX_DELTA = 15; // px
 	const USER_HITBOX_WIDTH = 64; // px
@@ -323,7 +325,8 @@
 		const handleMouseMove = (e) => {
 			const rect = gameWindowRef.getBoundingClientRect();
 			// X position relative to the element
-			const mousePositionXTemp = e.clientX - rect.left - USER_HITBOX_WIDTH / 2;
+			const mousePositionXTemp =
+				(e.clientX - rect.left) / scale - USER_HITBOX_WIDTH / 2;
 			if (
 				mousePositionXTemp >= gameWindowDimensions.minXAxisValue &&
 				mousePositionXTemp <=
@@ -498,7 +501,7 @@
 
 <div
 	bind:this={gameWindowRef}
-	class="relative rounded-lg grow w-full overflow-hidden bg-gray-800"
+	class="relative rounded-lg grow w-full h-full overflow-hidden bg-gray-800"
 >
 	{#each starburstsArr as starburst}
 		<div

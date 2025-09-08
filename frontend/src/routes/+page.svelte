@@ -1,7 +1,7 @@
 <script>
-	import GameWindow from '../components/GameWindow.svelte';
 	import infoSVG from '../assets/info.svg';
 	import githubSVG from '../assets/github.svg';
+	import StageGameWindow from '../components/StageGameWindow.svelte';
 </script>
 
 <div class="w-screen h-screen p-8 pt-0 bg-gray-900 flex flex-col">
@@ -26,5 +26,5 @@
 			<div class="pl-2">github</div>
 		</a>
 	</div>
-	<GameWindow />
+	<StageGameWindow />
 </div>
