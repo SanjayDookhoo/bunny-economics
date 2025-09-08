@@ -1,6 +1,7 @@
 <script>
 	import { onMount } from 'svelte';
 	import Starburst from './Starburst.svelte';
+	import forest from '../assets/forest.png';
 
 	const X_AXIS_MAX_DELTA = 15; // px
 	const Y_AXIS_MAX_DELTA = 15; // px
@@ -19,6 +20,7 @@
 	const STARBURST_COUNT_PER_RANGE = 3; // px
 	const DESPAWN_BELLS_BELOW_CURRENT_USER_LOCATION_BELLS = 6;
 	const DESPAWN_STARBURST_OUT_OF_YPX_RANGE = 800;
+	const DESPAWN_BELL_APPROACHING_GROUND_AT_PX = 300;
 	const STARBURST_BASE_HEIGHT_AND_WIDTH = 15; // px
 	const STARBURST_BASE_OPACITY = 15;
 	const STARBURST_ID_START = 5;
@@ -432,7 +434,10 @@
 				if (minIndex != -1) {
 					const lowestYPositionPX = bellsArr[minIndex].YPositionPX;
 
-					if (scrollingBellsStartingYPositionPX + lowestYPositionPX < 200) {
+					if (
+						scrollingBellsStartingYPositionPX + lowestYPositionPX <
+						DESPAWN_BELL_APPROACHING_GROUND_AT_PX
+					) {
 						createNewBell(minIndex);
 					}
 				}
@@ -503,6 +508,21 @@
 			<Starburst />
 		</div>
 	{/each}
+	<div
+		class="absolute w-full h-[{DESPAWN_BELL_APPROACHING_GROUND_AT_PX}px]"
+		style="bottom: {-cameraPanningY}px;"
+	>
+		<img
+			src={forest}
+			class="absolute bottom-[-150px] w-[75%] left-[-20px]"
+			alt="forest 1"
+		/>
+		<img
+			src={forest}
+			class="absolute bottom-[-150px] w-[75%] right-[-20px]"
+			alt="forest 2"
+		/>
+	</div>
 
 	<div
 		id="user"
