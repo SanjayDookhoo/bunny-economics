@@ -68,9 +68,9 @@
 
 		// Desired camera y (only change if player left the band)
 		let cameraGoalY = cameraPanningY;
-		if (userPositionY < deadMin) {
+		if (playerScreenY < deadMin) {
 			cameraGoalY = userPositionY - deadMin; // push camera down
-		} else if (userPositionY > deadMax) {
+		} else if (playerScreenY > deadMax) {
 			cameraGoalY = userPositionY - deadMax; // push camera up
 		}
 
@@ -299,7 +299,11 @@
 					if (delta == MAX_FREE_FALL_SPEED) {
 						inMaxFreeFallSpeed = 1;
 					}
-					userPositionY += delta;
+					if (userPositionY + delta < 0) {
+						userPositionY = 0;
+					} else {
+						userPositionY += delta;
+					}
 				}
 			}
 
