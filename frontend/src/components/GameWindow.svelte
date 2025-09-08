@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import Starburst from './Starburst.svelte';
 	import forest from '../assets/forest.png';
+	import bellImg from '../assets/bell.png';
 
 	let { scale } = $props();
 
@@ -521,7 +522,7 @@
 	>
 		<img src={forest} class="w-[850px]" alt="forest 1" />
 		<img src={forest} class="w-[850px]" alt="forest 2" />
-		<img src={forest} class="w-[850px]" alt="forest 2" />
+		<img src={forest} class="w-[850px]" alt="forest 3" />
 	</div>
 
 	<div
@@ -532,12 +533,42 @@
 	></div>
 
 	{#each bellsArr as bell}
-		<div
+		<img
+			src={bellImg}
+			alt="bell"
 			id="bell-{bell.bellId}"
-			class="absolute bg-blue-500"
+			class="absolute swing-bell"
 			style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {scrollingBellsStartingYPositionPX +
 				bell.YPositionPX -
 				cameraPanningY}px; left:{bell.XPositionPX}px"
-		></div>
+		/>
 	{/each}
 </div>
+
+<style>
+	.swing-bell {
+		display: block;
+		width: 128px;
+		height: 128px;
+		animation: swing 2s linear infinite;
+		transform-origin: 50% 0%; /* pivot at top center */
+	}
+
+	@keyframes swing {
+		0% {
+			transform: rotate(0deg);
+		}
+		25% {
+			transform: rotate(5deg);
+		}
+		50% {
+			transform: rotate(0deg);
+		}
+		75% {
+			transform: rotate(-5deg);
+		}
+		100% {
+			transform: rotate(0deg);
+		}
+	}
+</style>
