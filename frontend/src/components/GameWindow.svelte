@@ -1,5 +1,5 @@
 <script>
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import Starburst from './Starburst.svelte';
 	import forest from '../assets/forest.png';
 	import bellImg from '../assets/bell.png';
@@ -35,7 +35,6 @@
 		for (let index = 0; index < BELLS_MAX_COUNT; index++) {
 			arr.push({
 				bellId: crypto.randomUUID(),
-				intervalId: null,
 				YPositionPX: 0,
 				XPositionPX: 0,
 				hidden: true,
@@ -50,12 +49,12 @@
 	let yAxisIntervalId;
 	let wasAtPositionY;
 	let collidedThereforeGameStarted = 0;
-	let gameNotStarterRemoveGroundLevelBellsIntervalId;
 	let latestBellId = 1;
 	let latestStarburstId = STARBURST_ID_START;
 	let latestBellYPositionPX = 0;
 	let inMaxFreeFallSpeed = 0;
 	let userInteracted = false;
+	let bellsArrIntervalIdMap = new Map(); // uses the bellsArr index to map to the related intervalId for the collision check interval, ensures that this can be cleared on hot reloading in svelte without triggering a $effect cyclic loop because of trying to read and write to the array simultaneously
 
 	let goalPositionY = $state(0);
 	let mousePositionX = $state(undefined);
@@ -124,7 +123,7 @@
 		return Math.random() * (end - start) + start;
 	};
 
-	const createNewBell = (bellIndex) => {
+	const createNewBell = (index) => {
 		const YVariance = getRandomFloatInclusive(0, Y_VARIANCE_AMOUNT);
 		latestBellId++;
 		const currentBellId = latestBellId;
@@ -135,7 +134,6 @@
 			latestBellYPositionPX + Y_BETWEEN_BELLS_BASE_HEIGHT + YVariance;
 		const bell = {
 			bellId: latestBellId,
-			intervalId,
 			YPositionPX,
 			XPositionPX: getRandomFloatInclusive(
 				gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING,
@@ -145,9 +143,21 @@
 			),
 			hidden: false, // will allow hiding by css originally, so there isnt a flicker of bells being removed from dom
 		};
-		bellsArr[bellIndex] = bell;
+
+		const prevIntervalId = bellsArrIntervalIdMap.get(index);
+		clearInterval(prevIntervalId);
+
+		bellsArrIntervalIdMap.set(index, intervalId);
+		bellsArr[index] = bell;
 		latestBellYPositionPX = YPositionPX;
 	};
+
+	// ensures on hot reload the intervals for collision check are cleared
+	onDestroy(() => {
+		for (const intervalId of bellsArrIntervalIdMap.values()) {
+			clearInterval(intervalId);
+		}
+	});
 
 	$effect(() => {
 		if (!showMenu) {
@@ -447,14 +457,13 @@
 		audio.play();
 
 		const bellIndex = bellsArr.findIndex((e) => e.bellId == bellId);
-		clearInterval(bellsArr[bellIndex].intervalId);
 		goalPositionY = userPositionY + BELL_HITBOX_HEIGHT + Y_JUMP;
 		inMaxFreeFallSpeed = 0;
 		createNewBell(bellIndex);
 	};
 
 	onMount(() => {
-		gameNotStarterRemoveGroundLevelBellsIntervalId = setInterval(() => {
+		const intervalId = setInterval(() => {
 			let minIndex = -1;
 			let minValue = Infinity;
 			for (let i = 0; i < bellsArr.length; i++) {
@@ -474,11 +483,13 @@
 				}
 			}
 		}, 50);
+
+		return () => clearInterval(intervalId);
 	});
 
 	// remove all bells that is generally lower than DESPAWN_BELLS_BELOW_CURRENT_USER_LOCATION_BELLS bells below current userPosition
 	onMount(() => {
-		setInterval(() => {
+		const intervalId = setInterval(() => {
 			for (const [index, val] of bellsArr.entries()) {
 				if (
 					val.YPositionPX <
@@ -490,11 +501,13 @@
 				}
 			}
 		}, 50);
+
+		return () => clearInterval(intervalId);
 	});
 
 	// remove all starburst that is generally lower than DESPAWN_STARBURST_OUT_OF_YPX_RANGE range below current userPosition
 	onMount(() => {
-		setInterval(() => {
+		const intervalId = setInterval(() => {
 			if (!inMaxFreeFallSpeed) {
 				for (const [index, val] of starburstsArr.entries()) {
 					if (
@@ -520,6 +533,8 @@
 				}
 			}
 		}, 50);
+
+		return () => clearInterval(intervalId);
 	});
 
 	// Chrome (and most modern browsers) block autoplay of audio/video with sound until the user has interacted with the page
@@ -566,7 +581,7 @@
 	});
 
 	onMount(() => {
-		setInterval(() => {
+		const intervalId = setInterval(() => {
 			if (collidedThereforeGameStarted && userPositionY == 0) {
 				showMenu = true;
 				collidedThereforeGameStarted = false;
@@ -577,6 +592,8 @@
 				}
 			}
 		}, 10);
+
+		return () => clearInterval(intervalId);
 	});
 </script>
 
