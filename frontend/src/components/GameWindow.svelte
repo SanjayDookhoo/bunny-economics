@@ -3,6 +3,7 @@
 	import Starburst from './Starburst.svelte';
 	import forest from '../assets/forest.png';
 	import bellImg from '../assets/bell.png';
+	import Menu from './Menu.svelte';
 
 	let { scale } = $props();
 
@@ -61,6 +62,8 @@
 	let scrollingBellsStartingYPositionPX = $state(250); // px
 	let gameWindowRef = $state();
 	let volume = $state(0.5);
+	let showMenu = $state(true);
+
 	let audioContext;
 	let buffer;
 
@@ -105,7 +108,7 @@
 		return Math.random() * (end - start) + start;
 	};
 
-	const createNewBell = (bellIndex) => {
+	const createNewBell = (bellIndex, initialize) => {
 		const YVariance = getRandomFloatInclusive(0, Y_VARIANCE_AMOUNT);
 		latestBellId++;
 		const currentBellId = latestBellId;
@@ -124,8 +127,9 @@
 					USER_HITBOX_WIDTH -
 					HORIZONTAL_INTERACTIVE_PADDING
 			),
+			hidden: false, // will allow hiding by css originally, so there isnt a flicker of bells being removed from dom
 		};
-		if (bellsArr[bellIndex]) {
+		if (!initialize) {
 			bellsArr[bellIndex] = bell;
 		} else {
 			bellsArr.push(bell);
@@ -133,13 +137,22 @@
 		latestBellYPositionPX = YPositionPX;
 	};
 
-	// initiate bells
 	onMount(() => {
 		setTimeout(() => {
 			for (let index = 0; index < BELLS_MAX_COUNT; index++) {
+				createNewBell(index, true);
+			}
+		}, 500);
+	});
+
+	$effect(() => {
+		if (!showMenu) {
+			latestBellYPositionPX = 0;
+			scrollingBellsStartingYPositionPX = 0;
+			for (let index = 0; index < BELLS_MAX_COUNT; index++) {
 				createNewBell(index);
 			}
-		}, 1000);
+		}
 	});
 
 	const createNewStarburst = ({ index: starburstIndex, isAscending }) => {
@@ -356,6 +369,7 @@
 			if (e.button !== 0) return; // only allow left click
 			if (userPositionY != 0) return;
 			if (collidedThereforeGameStarted) return;
+			if (showMenu) return;
 			goalPositionY += Y_JUMP;
 		};
 
@@ -437,26 +451,22 @@
 
 	onMount(() => {
 		gameNotStarterRemoveGroundLevelBellsIntervalId = setInterval(() => {
-			if (collidedThereforeGameStarted) {
-				clearInterval(gameNotStarterRemoveGroundLevelBellsIntervalId);
-			} else {
-				let minIndex = -1;
-				let minValue = Infinity;
-				for (let i = 0; i < bellsArr.length; i++) {
-					if (bellsArr[i].YPositionPX < minValue) {
-						minValue = bellsArr[i].YPositionPX;
-						minIndex = i;
-					}
+			let minIndex = -1;
+			let minValue = Infinity;
+			for (let i = 0; i < bellsArr.length; i++) {
+				if (bellsArr[i].YPositionPX < minValue) {
+					minValue = bellsArr[i].YPositionPX;
+					minIndex = i;
 				}
-				if (minIndex != -1) {
-					const lowestYPositionPX = bellsArr[minIndex].YPositionPX;
+			}
+			if (minIndex != -1) {
+				const lowestYPositionPX = bellsArr[minIndex].YPositionPX;
 
-					if (
-						scrollingBellsStartingYPositionPX + lowestYPositionPX <
-						DESPAWN_BELL_APPROACHING_GROUND_AT_PX
-					) {
-						createNewBell(minIndex);
-					}
+				if (
+					scrollingBellsStartingYPositionPX + lowestYPositionPX <
+					DESPAWN_BELL_APPROACHING_GROUND_AT_PX
+				) {
+					createNewBell(minIndex);
 				}
 			}
 		}, 50);
@@ -550,12 +560,28 @@
 			document.removeEventListener('touchstart', interactedWithPage);
 		};
 	});
+
+	onMount(() => {
+		setInterval(() => {
+			if (collidedThereforeGameStarted && userPositionY == 0) {
+				showMenu = true;
+				collidedThereforeGameStarted = false;
+
+				// will allow hiding by css originally, so there isnt a flicker of bells being removed from dom
+				for (let index = 0; index < BELLS_MAX_COUNT; index++) {
+					bellsArr[index].hidden = true;
+				}
+			}
+		}, 10);
+	});
 </script>
 
 <div
 	bind:this={gameWindowRef}
 	class="relative rounded-lg grow w-full h-full overflow-hidden bg-gray-800 select-none"
 >
+	<Menu bind:showMenu />
+
 	{#each starburstsArr as starburst}
 		<div
 			class="text-white absolute"
@@ -579,22 +605,25 @@
 
 	<div
 		id="user"
-		class="absolute rounded-full bg-gray-500"
+		class="absolute rounded-full bg-gray-500 fade-in-out"
 		style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {userPositionY -
-			cameraPanningY}px; left:{userPositionX}px"
+			cameraPanningY}px; left:{userPositionX}px; opacity: {showMenu ? 0 : 1}"
 	></div>
-
-	{#each bellsArr as bell}
-		<img
-			src={bellImg}
-			alt="bell"
-			id="bell-{bell.bellId}"
-			class="absolute swing-bell"
-			style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {scrollingBellsStartingYPositionPX +
-				bell.YPositionPX -
-				cameraPanningY}px; left:{bell.XPositionPX}px"
-		/>
-	{/each}
+	{#if !showMenu}
+		{#each bellsArr as bell}
+			<img
+				src={bellImg}
+				alt="bell"
+				id="bell-{bell.bellId}"
+				class="absolute swing-bell fade-in"
+				style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {scrollingBellsStartingYPositionPX +
+					bell.YPositionPX -
+					cameraPanningY}px; left:{bell.XPositionPX}px; visibility: {bell.hidden
+					? 'hidden'
+					: 'visible'}"
+			/>
+		{/each}
+	{/if}
 </div>
 
 <style>
@@ -621,6 +650,21 @@
 		}
 		100% {
 			transform: rotate(0deg);
+		}
+	}
+
+	.fade-in-out {
+		transition: opacity 0.8s ease;
+	}
+
+	.fade-in {
+		opacity: 0;
+		animation: fadeIn 0.8s ease forwards; /* duration = 0.8s */
+	}
+
+	@keyframes fadeIn {
+		to {
+			opacity: 1;
 		}
 	}
 </style>
