@@ -79,8 +79,7 @@
 	let volume = $state(0.5);
 	let showMenu = $state(true);
 
-	let audioContext;
-	let buffer;
+	let gainNode = $state(null);
 
 	const updateCamera = (dt, userPositionY) => {
 		const tau = inMaxFreeFallSpeed ? 0 : 0.15; // smoothing: smaller = snappier, when in freefall make the camera snap faster, so the user doesnt go out of bounds because the camera cant keep up with the user falling
@@ -543,12 +542,18 @@
 		const interactedWithPage = () => {
 			if (!userInteracted) {
 				userInteracted = true;
+
+				let audioContext;
+				let buffer;
+				let source;
+
 				async function loadAudio() {
 					if (!audioContext) {
 						audioContext = new (window.AudioContext ||
 							window.webkitAudioContext)();
+						gainNode = audioContext.createGain(); // create a gain node
+						gainNode.connect(audioContext.destination); // connect it to speakers
 					}
-
 					// Fetch and decode
 					const response = await fetch('./idle.mp3'); // adjust path if needed
 					const arrayBuffer = await response.arrayBuffer();
@@ -558,12 +563,18 @@
 				async function playLoop() {
 					if (!buffer) await loadAudio();
 
-					const source = audioContext.createBufferSource();
+					// Create a new source each time you play
+					source = audioContext.createBufferSource();
 					source.buffer = buffer;
 					source.loop = true;
-					source.connect(audioContext.destination);
+
+					// Connect source → gain → destination
+					source.connect(gainNode);
+					gainNode.gain.value = volume;
+
 					source.start(0);
 				}
+
 				playLoop();
 			}
 		};
@@ -578,6 +589,12 @@
 			document.removeEventListener('keydown', interactedWithPage);
 			document.removeEventListener('touchstart', interactedWithPage);
 		};
+	});
+
+	$effect(() => {
+		if (gainNode) {
+			gainNode.gain.value = volume;
+		}
 	});
 
 	onMount(() => {
@@ -601,7 +618,7 @@
 	bind:this={gameWindowRef}
 	class="relative rounded-lg grow w-full h-full overflow-hidden bg-gray-800 select-none"
 >
-	<Menu bind:showMenu />
+	<Menu bind:showMenu bind:volume />
 
 	{#if !showMenu}
 		{#each starburstsArr as starburst}

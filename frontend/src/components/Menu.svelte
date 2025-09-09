@@ -1,5 +1,5 @@
 <script>
-	let { showMenu = $bindable() } = $props();
+	let { showMenu = $bindable(), volume = $bindable() } = $props();
 
 	const options = ['Scoreboard', 'How to play', 'Settings'];
 	let playedBefore = $state(false);
@@ -38,6 +38,19 @@
 			<button onclick={playButtonHandler}>
 				{playedBefore ? 'Play Again' : 'Play'}
 			</button>
+		</div>
+		<button>Fullscreen</button>
+		<div>
+			<label for="volume">Volume:</label>
+			<input
+				type="range"
+				id="points"
+				name="volume"
+				min="0"
+				max="1"
+				step="0.05"
+				bind:value={volume}
+			/>
 		</div>
 	</div>
 </div>
