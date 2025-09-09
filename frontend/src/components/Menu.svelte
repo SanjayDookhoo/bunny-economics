@@ -3,7 +3,7 @@
 
 	const options = ['Scoreboard', 'How to play', 'Settings'];
 	let playedBefore = $state(false);
-	let optionSelected = $state('Scoreboard');
+	let optionSelected = $derived(playedBefore ? 'Scoreboard' : 'How to play');
 
 	const playButtonHandler = () => {
 		showMenu = false;
@@ -15,7 +15,7 @@
 	<div class="bg-zinc-400 w-[800px] h-[400px] m-[50px] flex flex-col">
 		<div class="grow flex">
 			<div class="flex flex-col items-start">
-				{#each options as option}
+				{#each options.filter((option) => playedBefore || (!playedBefore && option != 'Scoreboard')) as option}
 					<button
 						onclick={() => (optionSelected = option)}
 						class={optionSelected == option ? 'bg-yellow-500' : ''}
