@@ -28,6 +28,21 @@
 	const STARBURST_BASE_HEIGHT_AND_WIDTH = 15; // px
 	const STARBURST_BASE_OPACITY = 15;
 	const STARBURST_ID_START = 5;
+	const FIRST_BELL_Y_POSITION_PX = 200;
+	// defined for an easy initializing of state
+	const createInitialArr = () => {
+		const arr = [];
+		for (let index = 0; index < BELLS_MAX_COUNT; index++) {
+			arr.push({
+				bellId: crypto.randomUUID(),
+				intervalId: null,
+				YPositionPX: 0,
+				XPositionPX: 0,
+				hidden: true,
+			});
+		}
+		return arr;
+	};
 
 	let xAxisCurrentInterval;
 	let yAxisCurrentInterval;
@@ -57,7 +72,8 @@
 		minYAxisValue: 0,
 		maxYAxisValue: 0,
 	});
-	let bellsArr = $state([]);
+
+	let bellsArr = $state(createInitialArr());
 	let starburstsArr = $state([]);
 	let scrollingBellsStartingYPositionPX = $state(250); // px
 	let gameWindowRef = $state();
@@ -108,7 +124,7 @@
 		return Math.random() * (end - start) + start;
 	};
 
-	const createNewBell = (bellIndex, initialize) => {
+	const createNewBell = (bellIndex) => {
 		const YVariance = getRandomFloatInclusive(0, Y_VARIANCE_AMOUNT);
 		latestBellId++;
 		const currentBellId = latestBellId;
@@ -129,25 +145,13 @@
 			),
 			hidden: false, // will allow hiding by css originally, so there isnt a flicker of bells being removed from dom
 		};
-		if (!initialize) {
-			bellsArr[bellIndex] = bell;
-		} else {
-			bellsArr.push(bell);
-		}
+		bellsArr[bellIndex] = bell;
 		latestBellYPositionPX = YPositionPX;
 	};
 
-	onMount(() => {
-		setTimeout(() => {
-			for (let index = 0; index < BELLS_MAX_COUNT; index++) {
-				createNewBell(index, true);
-			}
-		}, 500);
-	});
-
 	$effect(() => {
 		if (!showMenu) {
-			latestBellYPositionPX = 0;
+			latestBellYPositionPX = FIRST_BELL_Y_POSITION_PX;
 			scrollingBellsStartingYPositionPX = 0;
 			for (let index = 0; index < BELLS_MAX_COUNT; index++) {
 				createNewBell(index);
@@ -582,18 +586,21 @@
 >
 	<Menu bind:showMenu />
 
-	{#each starburstsArr as starburst}
-		<div
-			class="text-white absolute"
-			style="height: {STARBURST_BASE_HEIGHT_AND_WIDTH *
-				starburst.multiplier}px; width: {STARBURST_BASE_HEIGHT_AND_WIDTH *
-				starburst.multiplier}px; bottom: {starburst.YPositionPX -
-				cameraPanningY}px; left:{starburst.XPositionPX}px; opacity: {STARBURST_BASE_OPACITY *
-				starburst.multiplier}%;"
-		>
-			<Starburst />
-		</div>
-	{/each}
+	{#if !showMenu}
+		{#each starburstsArr as starburst}
+			<div
+				class="text-white absolute"
+				style="height: {STARBURST_BASE_HEIGHT_AND_WIDTH *
+					starburst.multiplier}px; width: {STARBURST_BASE_HEIGHT_AND_WIDTH *
+					starburst.multiplier}px; bottom: {starburst.YPositionPX -
+					cameraPanningY}px; left:{starburst.XPositionPX}px; opacity: {STARBURST_BASE_OPACITY *
+					starburst.multiplier}%;"
+			>
+				<Starburst />
+			</div>
+		{/each}
+	{/if}
+
 	<div
 		class="absolute w-full flex items-center h-[{DESPAWN_BELL_APPROACHING_GROUND_AT_PX}px]"
 		style="bottom: {-cameraPanningY - 150}px;"
