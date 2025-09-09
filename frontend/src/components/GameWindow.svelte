@@ -4,6 +4,7 @@
 	import forest from '../assets/forest.png';
 	import bellImg from '../assets/bell.png';
 	import Menu from './Menu.svelte';
+	import IdleMusic from './IdleMusic.svelte';
 
 	let { scale } = $props();
 
@@ -53,7 +54,6 @@
 	let latestStarburstId = STARBURST_ID_START;
 	let latestBellYPositionPX = 0;
 	let inMaxFreeFallSpeed = 0;
-	let userInteracted = false;
 	let bellsArrIntervalIdMap = new Map(); // uses the bellsArr index to map to the related intervalId for the collision check interval, ensures that this can be cleared on hot reloading in svelte without triggering a $effect cyclic loop because of trying to read and write to the array simultaneously
 
 	let goalPositionY = $state(0);
@@ -78,8 +78,6 @@
 	let gameWindowRef = $state();
 	let volume = $state(0.5);
 	let showMenu = $state(true);
-
-	let gainNode = $state(null);
 
 	const updateCamera = (dt, userPositionY) => {
 		const tau = inMaxFreeFallSpeed ? 0 : 0.15; // smoothing: smaller = snappier, when in freefall make the camera snap faster, so the user doesnt go out of bounds because the camera cant keep up with the user falling
@@ -536,67 +534,6 @@
 		return () => clearInterval(intervalId);
 	});
 
-	// Chrome (and most modern browsers) block autoplay of audio/video with sound until the user has interacted with the page
-	// loads into buffer and plays from buffer to reduce the delay of autoplay restarting the loop
-	onMount(() => {
-		const interactedWithPage = () => {
-			if (!userInteracted) {
-				userInteracted = true;
-
-				let audioContext;
-				let buffer;
-				let source;
-
-				async function loadAudio() {
-					if (!audioContext) {
-						audioContext = new (window.AudioContext ||
-							window.webkitAudioContext)();
-						gainNode = audioContext.createGain(); // create a gain node
-						gainNode.connect(audioContext.destination); // connect it to speakers
-					}
-					// Fetch and decode
-					const response = await fetch('./idle.mp3'); // adjust path if needed
-					const arrayBuffer = await response.arrayBuffer();
-					buffer = await audioContext.decodeAudioData(arrayBuffer);
-				}
-
-				async function playLoop() {
-					if (!buffer) await loadAudio();
-
-					// Create a new source each time you play
-					source = audioContext.createBufferSource();
-					source.buffer = buffer;
-					source.loop = true;
-
-					// Connect source → gain → destination
-					source.connect(gainNode);
-					gainNode.gain.value = volume;
-
-					source.start(0);
-				}
-
-				playLoop();
-			}
-		};
-
-		// Listen for the first valid interaction
-		document.addEventListener('click', interactedWithPage);
-		document.addEventListener('keydown', interactedWithPage);
-		document.addEventListener('touchstart', interactedWithPage);
-
-		return () => {
-			document.removeEventListener('click', interactedWithPage);
-			document.removeEventListener('keydown', interactedWithPage);
-			document.removeEventListener('touchstart', interactedWithPage);
-		};
-	});
-
-	$effect(() => {
-		if (gainNode) {
-			gainNode.gain.value = volume;
-		}
-	});
-
 	onMount(() => {
 		const intervalId = setInterval(() => {
 			if (collidedThereforeGameStarted && userPositionY == 0) {
@@ -618,6 +555,7 @@
 	bind:this={gameWindowRef}
 	class="relative rounded-lg grow w-full h-full overflow-hidden bg-gray-800 select-none"
 >
+	<IdleMusic {volume} />
 	<Menu bind:showMenu bind:volume />
 
 	{#if !showMenu}
