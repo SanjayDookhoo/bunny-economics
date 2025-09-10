@@ -9,6 +9,11 @@
 		showMenu = false;
 		playedBefore = true;
 	};
+
+	// updates localStorage for persistence of user preference
+	$effect(() => {
+		localStorage.setItem('volume', volume);
+	});
 </script>
 
 <div class="flex justify-center {showMenu ? '' : 'hidden'}">

@@ -30,6 +30,7 @@
 	const STARBURST_BASE_OPACITY = 15;
 	const STARBURST_ID_START = 5;
 	const FIRST_BELL_Y_POSITION_PX = 200;
+	const DEFAULT_VOLUME = '0.5';
 	// defined for an easy initializing of state
 	const createInitialArr = () => {
 		const arr = [];
@@ -76,7 +77,9 @@
 	let starburstsArr = $state([]);
 	let scrollingBellsStartingYPositionPX = $state(250); // px
 	let gameWindowRef = $state();
-	let volume = $state(0.5);
+	let volume = $state(
+		parseFloat(localStorage.getItem('volume') ?? DEFAULT_VOLUME)
+	);
 	let showMenu = $state(true);
 
 	const updateCamera = (dt, userPositionY) => {
