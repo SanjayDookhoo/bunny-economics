@@ -1,9 +1,47 @@
 <script>
+	import { onMount } from 'svelte';
+
 	let { showMenu = $bindable(), volume = $bindable() } = $props();
 
 	const options = ['Scoreboard', 'How to play', 'Settings'];
 	let playedBefore = $state(false);
 	let optionSelected = $derived(playedBefore ? 'Scoreboard' : 'How to play');
+
+	let inFullscreen = $state(false);
+
+	onMount(() => {
+		const intervalId = setInterval(() => {
+			inFullscreen = !!document.fullscreenElement;
+		}, 200);
+
+		return () => clearInterval(intervalId);
+	});
+
+	const toggleFullscreen = () => {
+		const elem = document.getElementById('ar-box');
+
+		if (!document.fullscreenElement) {
+			// request fullscreen on the element
+			if (elem.requestFullscreen) {
+				elem.requestFullscreen();
+			} else if (elem.webkitRequestFullscreen) {
+				/* Safari */
+				elem.webkitRequestFullscreen();
+			} else if (elem.msRequestFullscreen) {
+				/* IE11 */
+				elem.msRequestFullscreen();
+			}
+		} else {
+			// exit fullscreen
+			if (document.exitFullscreen) {
+				document.exitFullscreen();
+			} else if (document.webkitExitFullscreen) {
+				document.webkitExitFullscreen();
+			} else if (document.msExitFullscreen) {
+				document.msExitFullscreen();
+			}
+		}
+	};
 
 	const playButtonHandler = () => {
 		showMenu = false;
@@ -44,7 +82,9 @@
 				{playedBefore ? 'Play Again' : 'Play'}
 			</button>
 		</div>
-		<button>Fullscreen</button>
+		<button onclick={toggleFullscreen}>
+			{inFullscreen ? 'Exit' : ''} Fullscreen
+		</button>
 		<div>
 			<label for="volume">Volume:</label>
 			<input

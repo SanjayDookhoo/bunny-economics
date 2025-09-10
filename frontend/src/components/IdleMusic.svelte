@@ -67,6 +67,4 @@
 			gainNode.gain.value = volume;
 		}
 	});
-
-	console.log('test');
 </script>

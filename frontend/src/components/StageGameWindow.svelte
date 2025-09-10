@@ -6,7 +6,7 @@
 
 	onMount(() => {
 		// Scales the stage to fit the current box while preserving the base ratio
-		const box = document.querySelector('.ar-box');
+		const box = document.getElementById('ar-box');
 		const stage = document.getElementById('stage');
 
 		const BASE_W = 1280; // match .stage width
@@ -44,15 +44,15 @@
 	});
 </script>
 
-<div class="ar-box" data-ar="16 / 9">
-	<div class="stage" id="stage">
+<div id="ar-box" data-ar="16 / 9">
+	<div id="stage">
 		<GameWindow {scale} />
 	</div>
 </div>
 
 <style>
 	/* Outer box keeps aspect ratio */
-	.ar-box {
+	#ar-box {
 		aspect-ratio: var(--ar, 16 / 9);
 		width: min(100vw, 100%);
 		height: auto;
@@ -61,7 +61,7 @@
 	}
 
 	/* The inner "design canvas"—pick your base size (e.g., 1280×720) */
-	.stage {
+	#stage {
 		width: 1280px; /* base width */
 		height: 720px; /* base height */
 		transform-origin: top left;
