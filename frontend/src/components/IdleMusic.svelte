@@ -10,6 +10,12 @@
 	// Chrome (and most modern browsers) block autoplay of audio/video with sound until the user has interacted with the page
 	// loads into buffer and plays from buffer to reduce the delay of autoplay restarting the loop
 	onMount(() => {
+		const removeListeners = () => {
+			document.removeEventListener('click', interactedWithPage);
+			document.removeEventListener('keydown', interactedWithPage);
+			document.removeEventListener('touchstart', interactedWithPage);
+		};
+
 		const interactedWithPage = () => {
 			if (!userInteracted) {
 				userInteracted = true;
@@ -47,6 +53,7 @@
 				}
 
 				playLoop();
+				removeListeners();
 			}
 		};
 
@@ -55,11 +62,7 @@
 		document.addEventListener('keydown', interactedWithPage);
 		document.addEventListener('touchstart', interactedWithPage);
 
-		return () => {
-			document.removeEventListener('click', interactedWithPage);
-			document.removeEventListener('keydown', interactedWithPage);
-			document.removeEventListener('touchstart', interactedWithPage);
-		};
+		return () => removeListeners();
 	});
 
 	$effect(() => {
