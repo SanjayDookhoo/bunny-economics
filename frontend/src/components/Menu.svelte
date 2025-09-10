@@ -9,6 +9,7 @@
 
 	let inFullscreen = $state(false);
 
+	// this ensures that the true state of inFullscreen is kept, because the user can exit the fullscreen with the keyboard "Escape" button, hence continuously checking the fullscreen state is required
 	onMount(() => {
 		const intervalId = setInterval(() => {
 			inFullscreen = !!document.fullscreenElement;
