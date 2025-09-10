@@ -8,7 +8,7 @@
 		previousScore = $bindable(),
 	} = $props();
 
-	const options = ['Scoreboard', 'How to play', 'Settings'];
+	const options = ['Scoreboard', 'How to play'];
 	let playedBefore = $state(false);
 	let optionSelected = $derived(playedBefore ? 'Scoreboard' : 'How to play');
 
@@ -58,6 +58,9 @@
 		playedBefore = true;
 	};
 
+	const optionsFilter = (option) =>
+		playedBefore || (!playedBefore && option != 'Scoreboard');
+
 	// updates localStorage for persistence of user preference
 	$effect(() => {
 		localStorage.setItem('volume', volume);
@@ -70,50 +73,209 @@
 </script>
 
 <div class="flex justify-center {showMenu ? '' : 'hidden'}">
-	<div class="bg-zinc-400 w-[800px] h-[400px] m-[50px] flex flex-col">
-		<div class="grow flex">
-			<div class="flex flex-col items-start">
-				{#each options.filter((option) => playedBefore || (!playedBefore && option != 'Scoreboard')) as option}
-					<button
-						onclick={() => (optionSelected = option)}
-						class={optionSelected == option ? 'bg-yellow-500' : ''}
-					>
-						{option}
-					</button>
-				{/each}
+	<div class="menu w-[800px] h-[400px] m-[50px] flex flex-col rounded-lg p-2">
+		<div class="flex justify-end [&>*]:m-1">
+			<div class="volume">
+				<label for="volume">Volume:</label>
+				<input
+					type="range"
+					id="points"
+					name="volume"
+					min="0"
+					max="1"
+					step="0.01"
+					bind:value={volume}
+				/>
 			</div>
-			<div>
+			<button class="pill-btn" onclick={toggleFullscreen}>
+				{#if inFullscreen}
+					<span class="material-symbols-outlined"> fullscreen_exit </span>
+				{:else}
+					<span class="material-symbols-outlined"> fullscreen </span>
+				{/if}
+				{inFullscreen ? 'Exit' : ''} Fullscreen
+			</button>
+		</div>
+
+		<div class="grow flex">
+			{#if options.filter(optionsFilter).length != 1}
+				<nav class="panel-left">
+					{#each options.filter(optionsFilter) as option}
+						<button
+							onclick={() => (optionSelected = option)}
+							class="nav-btn {optionSelected == option ? 'is-active' : ''}"
+						>
+							{option}
+						</button>
+					{/each}
+				</nav>
+			{/if}
+			<main class="panel-main grow">
 				{#if optionSelected == 'Scoreboard'}
+					<h2>Scoreboard</h2>
 					Score: {score}
 					{#if previousScore !== null}
 						Previous Score: {previousScore}
 					{/if}
 				{:else if optionSelected == 'How to play'}
-					How to play
-				{:else if optionSelected == 'Settings'}
-					Settings
+					<h2>How to play</h2>
 				{/if}
-			</div>
+			</main>
 		</div>
-		<div class="flex justify-center">
-			<button onclick={playButtonHandler}>
+		<div class="flex justify-center m-2">
+			<button class="cta" onclick={playButtonHandler}>
 				{playedBefore ? 'Play Again' : 'Play'}
 			</button>
 		</div>
-		<button onclick={toggleFullscreen}>
-			{inFullscreen ? 'Exit' : ''} Fullscreen
-		</button>
-		<div>
-			<label for="volume">Volume:</label>
-			<input
-				type="range"
-				id="points"
-				name="volume"
-				min="0"
-				max="1"
-				step="0.05"
-				bind:value={volume}
-			/>
-		</div>
 	</div>
 </div>
+
+<style>
+	:root {
+		--bg1: #0f172a;
+		--bg2: #1f2937;
+		--glass: rgba(255, 255, 255, 0.06);
+		--glass-strong: rgba(255, 255, 255, 0.1);
+		--border: rgba(255, 255, 255, 0.15);
+		--text: #e5e7eb;
+		--muted: #9ca3af;
+		--brand: #22c55e;
+		--brand-600: #16a34a;
+		--radius: 16px;
+		--shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+	}
+
+	.volume {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 10px 14px;
+		border-radius: 999px;
+		border: 1px solid var(--border);
+		background: var(--glass);
+		backdrop-filter: blur(10px);
+	}
+	.volume label {
+		font-size: 14px;
+		color: var(--muted);
+	}
+	.volume input {
+		width: 200px;
+		accent-color: var(--brand);
+	}
+
+	.menu {
+		background: radial-gradient(
+				800px 500px at 10% -10%,
+				rgba(34, 197, 94, 0.18),
+				transparent 60%
+			),
+			radial-gradient(
+				900px 600px at 100% 110%,
+				rgba(59, 130, 246, 0.18),
+				transparent 60%
+			),
+			linear-gradient(160deg, var(--bg1), var(--bg2));
+		border: white solid;
+	}
+
+	.pill-btn {
+		color: var(--muted);
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		padding: 10px 14px;
+		border-radius: 999px;
+		border: 1px solid var(--border);
+		background: var(--glass);
+		backdrop-filter: blur(10px);
+		transition:
+			transform 0.12s ease,
+			background 0.2s ease;
+	}
+	.pill-btn:hover {
+		transform: translateY(-1px);
+		background: var(--glass-strong);
+	}
+
+	.panel-left {
+		align-self: start;
+		padding: 12px;
+		border-radius: var(--radius);
+		border: 1px solid var(--border);
+		background: var(--glass);
+		backdrop-filter: blur(10px);
+		box-shadow: var(--shadow);
+	}
+	.nav-btn {
+		width: 100%;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 12px 14px;
+		margin: 6px 0;
+		border-radius: 12px;
+		background: transparent;
+		border: 1px solid transparent;
+		color: var(--text);
+		font-weight: 600;
+		cursor: pointer;
+		transition:
+			background 0.2s ease,
+			transform 0.12s ease,
+			border-color 0.2s ease;
+	}
+	.nav-btn:hover {
+		background: rgba(255, 255, 255, 0.06);
+		transform: translateX(2px);
+	}
+	.nav-btn.is-active {
+		background: linear-gradient(
+			180deg,
+			color-mix(in oklab, var(--brand) 85%, white 15%),
+			var(--brand-600)
+		);
+		color: #0b1020;
+		border-color: color-mix(in oklab, var(--brand) 80%, black 20%);
+	}
+
+	.panel-main {
+		margin-left: 10px;
+		padding: 20px clamp(18px, 3vw, 28px);
+		border-radius: var(--radius);
+		border: 1px solid var(--border);
+		background: var(--glass-strong);
+		box-shadow: var(--shadow);
+		display: grid;
+		gap: 12px;
+		align-content: start;
+	}
+	.panel-main h2 {
+		color: var(--muted);
+		margin: 4px 0 2px;
+		font-size: clamp(18px, 1.1vw + 12px, 24px);
+	}
+
+	.cta {
+		padding: 14px 30px;
+		font-weight: 700;
+		border-radius: 14px;
+		background: linear-gradient(
+			180deg,
+			color-mix(in oklab, var(--brand) 92%, white 8%),
+			var(--brand-600)
+		);
+		color: #0b1020;
+		border: 1px solid color-mix(in oklab, var(--brand) 80%, black 20%);
+		box-shadow:
+			0 10px 22px rgba(34, 197, 94, 0.25),
+			inset 0 1px 0 rgba(255, 255, 255, 0.35);
+		transition:
+			transform 0.12s ease,
+			filter 0.2s ease;
+	}
+	.cta:hover {
+		transform: translateY(-1px);
+		filter: brightness(1.03);
+	}
+</style>
