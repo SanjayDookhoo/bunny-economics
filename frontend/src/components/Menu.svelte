@@ -1,7 +1,12 @@
 <script>
 	import { onMount } from 'svelte';
 
-	let { showMenu = $bindable(), volume = $bindable() } = $props();
+	let {
+		showMenu = $bindable(),
+		volume = $bindable(),
+		score = $bindable(),
+		previousScore = $bindable(),
+	} = $props();
 
 	const options = ['Scoreboard', 'How to play', 'Settings'];
 	let playedBefore = $state(false);
@@ -45,6 +50,10 @@
 	};
 
 	const playButtonHandler = () => {
+		if (playedBefore) {
+			previousScore = score;
+		}
+		score = 0;
 		showMenu = false;
 		playedBefore = true;
 	};
@@ -52,6 +61,11 @@
 	// updates localStorage for persistence of user preference
 	$effect(() => {
 		localStorage.setItem('volume', volume);
+	});
+	$effect(() => {
+		if (score != 0) {
+			localStorage.setItem('previousScore', score);
+		}
 	});
 </script>
 
@@ -70,7 +84,10 @@
 			</div>
 			<div>
 				{#if optionSelected == 'Scoreboard'}
-					Scoreboard
+					Score: {score}
+					{#if previousScore !== null}
+						Previous Score: {previousScore}
+					{/if}
 				{:else if optionSelected == 'How to play'}
 					How to play
 				{:else if optionSelected == 'Settings'}

@@ -30,7 +30,7 @@
 	const STARBURST_BASE_OPACITY = 15;
 	const STARBURST_ID_START = 5;
 	const FIRST_BELL_Y_POSITION_PX = 200;
-	const DEFAULT_VOLUME = '0.5';
+	const DEFAULT_VOLUME = 0.5;
 	// defined for an easy initializing of state
 	const createInitialArr = () => {
 		const arr = [];
@@ -78,9 +78,18 @@
 	let scrollingBellsStartingYPositionPX = $state(250); // px
 	let gameWindowRef = $state();
 	let volume = $state(
-		parseFloat(localStorage.getItem('volume') ?? DEFAULT_VOLUME)
+		localStorage.getItem('volume')
+			? parseFloat(localStorage.getItem('volume'))
+			: DEFAULT_VOLUME
 	);
+
 	let showMenu = $state(true);
+	let score = $state(0);
+	let previousScore = $state(
+		localStorage.getItem('previousScore')
+			? parseInt(localStorage.getItem('previousScore'))
+			: null
+	);
 
 	const updateCamera = (dt, userPositionY) => {
 		const tau = inMaxFreeFallSpeed ? 0 : 0.15; // smoothing: smaller = snappier, when in freefall make the camera snap faster, so the user doesnt go out of bounds because the camera cant keep up with the user falling
@@ -460,6 +469,8 @@
 		goalPositionY = userPositionY + BELL_HITBOX_HEIGHT + Y_JUMP;
 		inMaxFreeFallSpeed = 0;
 		createNewBell(bellIndex);
+
+		score += 10;
 	};
 
 	onMount(() => {
@@ -559,7 +570,7 @@
 	class="relative rounded-lg grow w-full h-full overflow-hidden bg-gray-800 select-none"
 >
 	<IdleMusic {volume} />
-	<Menu bind:showMenu bind:volume />
+	<Menu bind:showMenu bind:volume bind:score bind:previousScore />
 
 	{#if !showMenu}
 		{#each starburstsArr as starburst}
