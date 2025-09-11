@@ -31,19 +31,6 @@
 	const STARBURST_ID_START = 5;
 	const FIRST_BELL_Y_POSITION_PX = 200;
 	const DEFAULT_VOLUME = 0.5;
-	// defined for an easy initializing of state
-	const createInitialArr = () => {
-		const arr = [];
-		for (let index = 0; index < BELLS_MAX_COUNT; index++) {
-			arr.push({
-				bellId: crypto.randomUUID(),
-				YPositionPX: 0,
-				XPositionPX: 0,
-				hidden: true,
-			});
-		}
-		return arr;
-	};
 
 	let xAxisCurrentInterval;
 	let yAxisCurrentInterval;
@@ -55,7 +42,6 @@
 	let latestStarburstId = STARBURST_ID_START;
 	let latestBellYPositionPX = 0;
 	let inMaxFreeFallSpeed = 0;
-	let bellsArrIntervalIdMap = new Map(); // uses the bellsArr index to map to the related intervalId for the collision check interval, ensures that this can be cleared on hot reloading in svelte without triggering a $effect cyclic loop because of trying to read and write to the array simultaneously
 
 	let goalPositionY = $state(0);
 	let mousePositionX = $state(undefined);
@@ -73,7 +59,7 @@
 		maxYAxisValue: 0,
 	});
 
-	let bellsArr = $state(createInitialArr());
+	let bellObjs = $state({});
 	let starburstsArr = $state([]);
 	let scrollingBellsStartingYPositionPX = $state(250); // px
 	let gameWindowRef = $state();
@@ -132,7 +118,7 @@
 		return Math.random() * (end - start) + start;
 	};
 
-	const createNewBell = (index) => {
+	const createNewBell = () => {
 		const YVariance = getRandomFloatInclusive(0, Y_VARIANCE_AMOUNT);
 		latestBellId++;
 		const currentBellId = latestBellId;
@@ -142,7 +128,6 @@
 		const YPositionPX =
 			latestBellYPositionPX + Y_BETWEEN_BELLS_BASE_HEIGHT + YVariance;
 		const bell = {
-			bellId: latestBellId,
 			YPositionPX,
 			XPositionPX: getRandomFloatInclusive(
 				gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING,
@@ -150,20 +135,17 @@
 					USER_HITBOX_WIDTH -
 					HORIZONTAL_INTERACTIVE_PADDING
 			),
-			hidden: false, // will allow hiding by css originally, so there isnt a flicker of bells being removed from dom
 		};
 
-		const prevIntervalId = bellsArrIntervalIdMap.get(index);
-		clearInterval(prevIntervalId);
-
-		bellsArrIntervalIdMap.set(index, intervalId);
-		bellsArr[index] = bell;
+		bellObjs[latestBellId] = bell;
 		latestBellYPositionPX = YPositionPX;
 	};
 
+	$inspect(bellObjs);
+
 	// ensures on hot reload the intervals for collision check are cleared
 	onDestroy(() => {
-		for (const intervalId of bellsArrIntervalIdMap.values()) {
+		for (const { intervalId } of Object.values(bellObjs)) {
 			clearInterval(intervalId);
 		}
 	});
@@ -173,7 +155,7 @@
 			latestBellYPositionPX = FIRST_BELL_Y_POSITION_PX;
 			scrollingBellsStartingYPositionPX = 0;
 			for (let index = 0; index < BELLS_MAX_COUNT; index++) {
-				createNewBell(index);
+				createNewBell();
 			}
 		}
 	});
@@ -254,8 +236,6 @@
 		raf = requestAnimationFrame(tick);
 		return () => cancelAnimationFrame(raf);
 	});
-
-	// $inspect(bellsArr);
 
 	// check on interval
 	// onmount here used to prevent hot reloading from stacking multiple intervals
@@ -456,6 +436,16 @@
 		}
 	};
 
+	const removeBell = (bellId) => {
+		clearInterval(bellObjs[bellId].intervalId);
+		delete bellObjs[bellId];
+	};
+
+	const removeAndCreateNewBell = (bellId) => {
+		removeBell(bellId);
+		createNewBell();
+	};
+
 	const handleCollide = (bellId) => {
 		if (!collidedThereforeGameStarted) {
 			collidedThereforeGameStarted = 1;
@@ -465,32 +455,32 @@
 		audio.volume = volume;
 		audio.play();
 
-		const bellIndex = bellsArr.findIndex((e) => e.bellId == bellId);
+		removeAndCreateNewBell(bellId); // TODO change to a different version to handle collision effects
+
 		goalPositionY = userPositionY + BELL_HITBOX_HEIGHT + Y_JUMP;
 		inMaxFreeFallSpeed = 0;
-		createNewBell(bellIndex);
 
 		score += 10;
 	};
 
 	onMount(() => {
 		const intervalId = setInterval(() => {
-			let minIndex = -1;
+			let minId = -1;
 			let minValue = Infinity;
-			for (let i = 0; i < bellsArr.length; i++) {
-				if (bellsArr[i].YPositionPX < minValue) {
-					minValue = bellsArr[i].YPositionPX;
-					minIndex = i;
+			for (const [bellId, bell] of Object.entries(bellObjs)) {
+				if (bell.YPositionPX < minValue) {
+					minValue = bell.YPositionPX;
+					minId = bellId;
 				}
 			}
-			if (minIndex != -1) {
-				const lowestYPositionPX = bellsArr[minIndex].YPositionPX;
+			if (minId != -1) {
+				const lowestYPositionPX = minValue;
 
 				if (
 					scrollingBellsStartingYPositionPX + lowestYPositionPX <
 					DESPAWN_BELL_APPROACHING_GROUND_AT_PX
 				) {
-					createNewBell(minIndex);
+					removeAndCreateNewBell(minId);
 				}
 			}
 		}, 50);
@@ -501,14 +491,14 @@
 	// remove all bells that is generally lower than DESPAWN_BELLS_BELOW_CURRENT_USER_LOCATION_BELLS bells below current userPosition
 	onMount(() => {
 		const intervalId = setInterval(() => {
-			for (const [index, val] of bellsArr.entries()) {
+			for (const [bellId, bell] of Object.entries(bellObjs)) {
 				if (
-					val.YPositionPX <
+					bell.YPositionPX <
 					userPositionY -
 						Y_BETWEEN_BELLS_BASE_HEIGHT *
 							DESPAWN_BELLS_BELOW_CURRENT_USER_LOCATION_BELLS
 				) {
-					createNewBell(index);
+					removeAndCreateNewBell(bellId);
 				}
 			}
 		}, 50);
@@ -548,15 +538,14 @@
 		return () => clearInterval(intervalId);
 	});
 
+	// detect bunny has fallen, game has ended
 	onMount(() => {
 		const intervalId = setInterval(() => {
 			if (collidedThereforeGameStarted && userPositionY == 0) {
 				showMenu = true;
 				collidedThereforeGameStarted = false;
-
-				// will allow hiding by css originally, so there isnt a flicker of bells being removed from dom
-				for (let index = 0; index < BELLS_MAX_COUNT; index++) {
-					bellsArr[index].hidden = true;
+				for (const bellId of Object.keys(bellObjs)) {
+					removeBell(bellId);
 				}
 			}
 		}, 10);
@@ -595,17 +584,15 @@
 				<Starburst />
 			</div>
 		{/each}
-		{#each bellsArr as bell}
+		{#each Object.entries(bellObjs) as [bellId, bell]}
 			<img
 				src={bellImg}
 				alt="bell"
-				id="bell-{bell.bellId}"
+				id="bell-{bellId}"
 				class="absolute swing-bell fade-in"
 				style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {scrollingBellsStartingYPositionPX +
 					bell.YPositionPX -
-					cameraPanningY}px; left:{bell.XPositionPX}px; visibility: {bell.hidden
-					? 'hidden'
-					: 'visible'}"
+					cameraPanningY}px; left:{bell.XPositionPX}px;"
 			/>
 		{/each}
 	{/if}
