@@ -1,6 +1,6 @@
 <script>
 	import { onDestroy, onMount } from 'svelte';
-	import Starburst from './Starburst.svelte';
+	import StarburstSVG from './StarburstSVG.svelte';
 	import forest from '../assets/forest.png';
 	import bellImg from '../assets/bell.png';
 	import Menu from './Menu.svelte';
@@ -590,7 +590,7 @@
 					cameraPanningY}px; left:{starburst.XPositionPX}px; opacity: {STARBURST_BASE_OPACITY *
 					starburst.multiplier}%;"
 			>
-				<Starburst />
+				<StarburstSVG />
 			</div>
 		{/each}
 		{#each Object.entries(bellsObj) as [bellId, bell] (bellId)}
