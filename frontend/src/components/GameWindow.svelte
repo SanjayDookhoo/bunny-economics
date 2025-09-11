@@ -5,6 +5,7 @@
 	import bellImg from '../assets/bell.png';
 	import Menu from './Menu.svelte';
 	import IdleMusic from './IdleMusic.svelte';
+	import { fxPopShine } from './effects';
 
 	let { scale } = $props();
 
@@ -135,13 +136,12 @@
 					USER_HITBOX_WIDTH -
 					HORIZONTAL_INTERACTIVE_PADDING
 			),
+			hidden: false,
 		};
 
 		bellObjs[latestBellId] = bell;
 		latestBellYPositionPX = YPositionPX;
 	};
-
-	$inspect(bellObjs);
 
 	// ensures on hot reload the intervals for collision check are cleared
 	onDestroy(() => {
@@ -446,16 +446,29 @@
 		createNewBell();
 	};
 
+	$inspect(bellObjs);
+
 	const handleCollide = (bellId) => {
 		if (!collidedThereforeGameStarted) {
 			collidedThereforeGameStarted = 1;
 		}
 
+		if (bellObjs[bellId].collided) return;
+
+		bellObjs[bellId].collided = true;
+
 		const audio = new Audio('./collectbell.mp3');
 		audio.volume = volume;
 		audio.play();
 
-		removeAndCreateNewBell(bellId); // TODO change to a different version to handle collision effects
+		clearInterval(bellObjs[bellId].intervalId);
+		bellObjs[bellId].hidden = true;
+		setTimeout(() => {
+			delete bellObjs[bellId];
+		}, 2000);
+		createNewBell();
+		console.log('bell-' + bellId);
+		fxPopShine(document.getElementById('bell-' + bellId), 10);
 
 		goalPositionY = userPositionY + BELL_HITBOX_HEIGHT + Y_JUMP;
 		inMaxFreeFallSpeed = 0;
@@ -584,16 +597,21 @@
 				<Starburst />
 			</div>
 		{/each}
-		{#each Object.entries(bellObjs) as [bellId, bell]}
-			<img
-				src={bellImg}
-				alt="bell"
+		{#each Object.entries(bellObjs) as [bellId, bell] (bellId)}
+			<div
 				id="bell-{bellId}"
-				class="absolute swing-bell fade-in"
+				class="absolute"
 				style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {scrollingBellsStartingYPositionPX +
 					bell.YPositionPX -
 					cameraPanningY}px; left:{bell.XPositionPX}px;"
-			/>
+			>
+				<img
+					class="swing-bell fade-in"
+					src={bellImg}
+					alt="bell"
+					style="visibility: {bell.hidden ? 'hidden' : 'visible'}"
+				/>
+			</div>
 		{/each}
 	{/if}
 

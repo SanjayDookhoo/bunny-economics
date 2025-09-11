@@ -1,1 +1,53 @@
 @import 'tailwindcss';
+
+.popshine {
+	background: conic-gradient(from 220deg, var(--accent), var(--accent2));
+}
+
+/* Floating points text */
+.float-text {
+	position: absolute;
+	font-weight: 900;
+	color: white;
+	text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+	pointer-events: none;
+	will-change: transform, opacity;
+}
+
+/* Particles */
+.particle {
+	position: absolute;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	pointer-events: none;
+	will-change: transform, opacity;
+}
+
+/* Glow ring for pop & shine */
+.ring {
+	position: absolute;
+	border-radius: 50%;
+	border: 3px solid rgba(255, 255, 255, 0.8);
+	filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.6));
+	pointer-events: none;
+	will-change: transform, opacity;
+}
+
+/* Optional idle pulse for collectibles */
+.pulse {
+	animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+	0%,
+	100% {
+		transform: scale(1);
+		box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35),
+			inset 0 0 20px rgba(255, 255, 255, 0.15);
+	}
+	50% {
+		transform: scale(1.05);
+		box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45),
+			inset 0 0 28px rgba(255, 255, 255, 0.2);
+	}
+}
