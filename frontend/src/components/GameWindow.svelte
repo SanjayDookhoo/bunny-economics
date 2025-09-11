@@ -572,7 +572,17 @@
 	<IdleMusic {volume} />
 	<Menu bind:showMenu bind:volume bind:score bind:previousScore />
 
+	<div
+		class="absolute w-full flex items-center h-[{DESPAWN_BELL_APPROACHING_GROUND_AT_PX}px]"
+		style="bottom: {-cameraPanningY - 150}px;"
+	>
+		<img src={forest} class="w-[850px]" alt="forest 1" />
+		<img src={forest} class="w-[850px]" alt="forest 2" />
+		<img src={forest} class="w-[850px]" alt="forest 3" />
+	</div>
+
 	{#if !showMenu}
+		<div class="absolute top-[10px] left-[10px] text-white">{score}</div>
 		{#each starburstsArr as starburst}
 			<div
 				class="text-white absolute"
@@ -585,24 +595,6 @@
 				<Starburst />
 			</div>
 		{/each}
-	{/if}
-
-	<div
-		class="absolute w-full flex items-center h-[{DESPAWN_BELL_APPROACHING_GROUND_AT_PX}px]"
-		style="bottom: {-cameraPanningY - 150}px;"
-	>
-		<img src={forest} class="w-[850px]" alt="forest 1" />
-		<img src={forest} class="w-[850px]" alt="forest 2" />
-		<img src={forest} class="w-[850px]" alt="forest 3" />
-	</div>
-
-	<div
-		id="user"
-		class="absolute rounded-full bg-gray-500 fade-in-out"
-		style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {userPositionY -
-			cameraPanningY}px; left:{userPositionX}px; opacity: {showMenu ? 0 : 1}"
-	></div>
-	{#if !showMenu}
 		{#each bellsArr as bell}
 			<img
 				src={bellImg}
@@ -617,6 +609,13 @@
 			/>
 		{/each}
 	{/if}
+
+	<div
+		id="user"
+		class="absolute rounded-full bg-gray-500 fade-in-out"
+		style="height: {USER_HITBOX_HEIGHT}px; width: {USER_HITBOX_WIDTH}px; bottom: {userPositionY -
+			cameraPanningY}px; left:{userPositionX}px; opacity: {showMenu ? 0 : 1}"
+	></div>
 </div>
 
 <style>
