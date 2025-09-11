@@ -337,8 +337,6 @@
 		return () => cancelAnimationFrame(raf);
 	});
 
-	// $inspect(goalPositionY);
-
 	// handle horizontal mouse move
 	onMount(() => {
 		if (!gameWindowRef) return;
@@ -445,8 +443,6 @@
 		removeBell(bellId);
 		createNewBell();
 	};
-
-	$inspect(bellObjs);
 
 	const handleCollide = (bellId) => {
 		if (!collidedThereforeGameStarted) {

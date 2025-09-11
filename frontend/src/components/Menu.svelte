@@ -139,8 +139,8 @@
 		--border: rgba(255, 255, 255, 0.15);
 		--text: #e5e7eb;
 		--muted: #9ca3af;
-		--brand: #22c55e;
-		--brand-600: #16a34a;
+		--brand: #eab308;
+		--brand-600: #ca8a04;
 		--radius: 16px;
 		--shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
 	}
@@ -167,7 +167,7 @@
 	.menu {
 		background: radial-gradient(
 				800px 500px at 10% -10%,
-				rgba(34, 197, 94, 0.18),
+				rgba(234, 179, 8, 0.18),
 				transparent 60%
 			),
 			radial-gradient(
@@ -176,7 +176,7 @@
 				transparent 60%
 			),
 			linear-gradient(160deg, var(--bg1), var(--bg2));
-		border: white solid;
+		border: black solid;
 	}
 
 	.pill-btn {
@@ -268,7 +268,7 @@
 		color: #0b1020;
 		border: 1px solid color-mix(in oklab, var(--brand) 80%, black 20%);
 		box-shadow:
-			0 10px 22px rgba(34, 197, 94, 0.25),
+			0 10px 22px rgba(234, 179, 8, 0.25),
 			inset 0 1px 0 rgba(255, 255, 255, 0.35);
 		transition:
 			transform 0.12s ease,
