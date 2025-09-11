@@ -40,7 +40,7 @@
 	let wasAtPositionY;
 	let collidedThereforeGameStarted = 0;
 	let latestBellId = 1;
-	let latestStarburstId = STARBURST_ID_START;
+	let latestStarburstRowId = STARBURST_ID_START;
 	let latestBellYPositionPX = 0;
 	let inMaxFreeFallSpeed = 0;
 
@@ -61,7 +61,7 @@
 	});
 
 	let bellsObj = $state({});
-	let starburstsArr = $state([]);
+	let starburstsObj = $state({});
 	let scrollingBellsStartingYPositionPX = $state(250); // px
 	let gameWindowRef = $state();
 	let volume = $state(
@@ -157,19 +157,34 @@
 			for (let index = 0; index < BELLS_MAX_COUNT; index++) {
 				createNewBell();
 			}
+			for (
+				let index = 0;
+				index < BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE;
+				index++
+			) {
+				createNewStarburst(true);
+			}
 		}
 	});
 
-	const createNewStarburst = ({ index: starburstIndex, isAscending }) => {
+	const removeStarburst = (starburstId) => {
+		delete starburstsObj[starburstId];
+	};
+
+	const removeAndCreateNewStarburst = (starburstId, isAscending) => {
+		removeStarburst(starburstId);
+		createNewStarburst(isAscending);
+	};
+
+	const createNewStarburst = (isAscending) => {
 		let starburst;
 		const YVariance = getRandomFloatInclusive(0, Y_VARIANCE_AMOUNT);
 		if (isAscending) {
-			latestStarburstId++;
+			latestStarburstRowId++;
 			starburst = {
-				starburstId: crypto.randomUUID(),
 				YPositionPX: getRandomFloatInclusive(
-					latestStarburstId * STARBURST_HEIGHT_RANGE,
-					latestStarburstId * (STARBURST_HEIGHT_RANGE + 1)
+					latestStarburstRowId * STARBURST_HEIGHT_RANGE,
+					latestStarburstRowId * (STARBURST_HEIGHT_RANGE + 1)
 				),
 				XPositionPX: getRandomFloatInclusive(
 					gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING,
@@ -180,13 +195,12 @@
 				multiplier: getRandomFloatInclusive(1, 2),
 			};
 		} else {
-			latestStarburstId--;
+			latestStarburstRowId--;
 			starburst = {
-				starburstId: crypto.randomUUID(),
 				YPositionPX: getRandomFloatInclusive(
-					(latestStarburstId - BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE) *
+					(latestStarburstRowId - BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE) *
 						STARBURST_HEIGHT_RANGE,
-					(latestStarburstId - BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE) *
+					(latestStarburstRowId - BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE) *
 						(STARBURST_HEIGHT_RANGE + 1)
 				),
 				XPositionPX: getRandomFloatInclusive(
@@ -199,25 +213,8 @@
 			};
 		}
 
-		if (starburstsArr[starburstIndex]) {
-			starburstsArr[starburstIndex] = starburst;
-		} else {
-			starburstsArr.push(starburst);
-		}
+		starburstsObj[crypto.randomUUID()] = starburst;
 	};
-
-	// initiate starburst
-	onMount(() => {
-		setTimeout(() => {
-			for (
-				let index = 0;
-				index < BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE;
-				index++
-			) {
-				createNewStarburst({ index, isAscending: true });
-			}
-		}, 1000);
-	});
 
 	// bells scroll
 	onMount(() => {
@@ -514,29 +511,29 @@
 		return () => clearInterval(intervalId);
 	});
 
-	// remove all starburst that is generally lower than DESPAWN_STARBURST_OUT_OF_YPX_RANGE range below current userPosition
+	// remove all starburst that is out of range in the opposite direction (up or down) heading towards
 	onMount(() => {
 		const intervalId = setInterval(() => {
 			if (!inMaxFreeFallSpeed) {
-				for (const [index, val] of starburstsArr.entries()) {
+				for (const [starburstId, starburst] of Object.entries(starburstsObj)) {
 					if (
-						val.YPositionPX <
+						starburst.YPositionPX <
 						userPositionY - DESPAWN_STARBURST_OUT_OF_YPX_RANGE
 					) {
-						createNewStarburst({ index, isAscending: true });
+						removeAndCreateNewStarburst(starburstId, true);
 					}
 				}
 			} else {
-				for (const [index, val] of starburstsArr.entries()) {
+				for (const [starburstId, starburst] of Object.entries(starburstsObj)) {
 					if (
-						latestStarburstId >
+						latestStarburstRowId >
 						BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE + STARBURST_ID_START
 					) {
 						if (
-							val.YPositionPX >
+							starburst.YPositionPX >
 							userPositionY + DESPAWN_STARBURST_OUT_OF_YPX_RANGE
 						) {
-							createNewStarburst({ index, isAscending: false });
+							removeAndCreateNewStarburst(starburstId, false);
 						}
 					}
 				}
@@ -554,6 +551,9 @@
 				collidedThereforeGameStarted = false;
 				for (const bellId of Object.keys(bellsObj)) {
 					removeBell(bellId);
+				}
+				for (const starburstId of Object.keys(starburstsObj)) {
+					removeStarburst(starburstId);
 				}
 			}
 		}, 10);
@@ -580,9 +580,10 @@
 
 	{#if !showMenu}
 		<div class="absolute top-[10px] left-[10px] text-white">{score}</div>
-		{#each starburstsArr as starburst}
+		{#each Object.entries(starburstsObj) as [starburstId, starburst] (starburstId)}
 			<div
 				class="text-white absolute"
+				id="starburst-{starburstId}"
 				style="height: {STARBURST_BASE_HEIGHT_AND_WIDTH *
 					starburst.multiplier}px; width: {STARBURST_BASE_HEIGHT_AND_WIDTH *
 					starburst.multiplier}px; bottom: {starburst.YPositionPX -
