@@ -5,7 +5,7 @@
 	import bellImg from '../assets/bell.png';
 	import Menu from './Menu.svelte';
 	import IdleMusic from './IdleMusic.svelte';
-	import { fxPopShine } from './effects';
+	import { fxPopShine } from '../lib/collisionEffects';
 
 	let { scale } = $props();
 
@@ -467,7 +467,6 @@
 			delete bellObjs[bellId];
 		}, 2000);
 		createNewBell();
-		console.log('bell-' + bellId);
 		fxPopShine(document.getElementById('bell-' + bellId), 10);
 
 		goalPositionY = userPositionY + BELL_HITBOX_HEIGHT + Y_JUMP;
