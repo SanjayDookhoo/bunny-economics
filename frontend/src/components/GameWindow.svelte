@@ -60,7 +60,7 @@
 		maxYAxisValue: 0,
 	});
 
-	let bellObjs = $state({});
+	let bellsObj = $state({});
 	let starburstsArr = $state([]);
 	let scrollingBellsStartingYPositionPX = $state(250); // px
 	let gameWindowRef = $state();
@@ -139,13 +139,13 @@
 			hidden: false,
 		};
 
-		bellObjs[latestBellId] = bell;
+		bellsObj[latestBellId] = bell;
 		latestBellYPositionPX = YPositionPX;
 	};
 
 	// ensures on hot reload the intervals for collision check are cleared
 	onDestroy(() => {
-		for (const { intervalId } of Object.values(bellObjs)) {
+		for (const { intervalId } of Object.values(bellsObj)) {
 			clearInterval(intervalId);
 		}
 	});
@@ -435,8 +435,8 @@
 	};
 
 	const removeBell = (bellId) => {
-		clearInterval(bellObjs[bellId].intervalId);
-		delete bellObjs[bellId];
+		clearInterval(bellsObj[bellId].intervalId);
+		delete bellsObj[bellId];
 	};
 
 	const removeAndCreateNewBell = (bellId) => {
@@ -449,18 +449,18 @@
 			collidedThereforeGameStarted = 1;
 		}
 
-		if (bellObjs[bellId].collided) return;
+		if (bellsObj[bellId].collided) return;
 
-		bellObjs[bellId].collided = true;
+		bellsObj[bellId].collided = true;
 
 		const audio = new Audio('./collectbell.mp3');
 		audio.volume = volume;
 		audio.play();
 
-		clearInterval(bellObjs[bellId].intervalId);
-		bellObjs[bellId].hidden = true;
+		clearInterval(bellsObj[bellId].intervalId);
+		bellsObj[bellId].hidden = true;
 		setTimeout(() => {
-			delete bellObjs[bellId];
+			delete bellsObj[bellId];
 		}, 2000);
 		createNewBell();
 		fxPopShine(document.getElementById('bell-' + bellId), 10);
@@ -475,7 +475,7 @@
 		const intervalId = setInterval(() => {
 			let minId = -1;
 			let minValue = Infinity;
-			for (const [bellId, bell] of Object.entries(bellObjs)) {
+			for (const [bellId, bell] of Object.entries(bellsObj)) {
 				if (bell.YPositionPX < minValue) {
 					minValue = bell.YPositionPX;
 					minId = bellId;
@@ -499,7 +499,7 @@
 	// remove all bells that is generally lower than DESPAWN_BELLS_BELOW_CURRENT_USER_LOCATION_BELLS bells below current userPosition
 	onMount(() => {
 		const intervalId = setInterval(() => {
-			for (const [bellId, bell] of Object.entries(bellObjs)) {
+			for (const [bellId, bell] of Object.entries(bellsObj)) {
 				if (
 					bell.YPositionPX <
 					userPositionY -
@@ -552,7 +552,7 @@
 			if (collidedThereforeGameStarted && userPositionY == 0) {
 				showMenu = true;
 				collidedThereforeGameStarted = false;
-				for (const bellId of Object.keys(bellObjs)) {
+				for (const bellId of Object.keys(bellsObj)) {
 					removeBell(bellId);
 				}
 			}
@@ -592,7 +592,7 @@
 				<Starburst />
 			</div>
 		{/each}
-		{#each Object.entries(bellObjs) as [bellId, bell] (bellId)}
+		{#each Object.entries(bellsObj) as [bellId, bell] (bellId)}
 			<div
 				id="bell-{bellId}"
 				class="absolute"
