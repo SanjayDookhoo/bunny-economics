@@ -1,7 +1,6 @@
 <script>
+	import { general } from '$lib/stores.svelte';
 	import { onMount } from 'svelte';
-
-	let { volume } = $props();
 
 	let userInteracted = false;
 
@@ -47,7 +46,7 @@
 
 					// Connect source → gain → destination
 					source.connect(gainNode);
-					gainNode.gain.value = volume;
+					gainNode.gain.value = general.volume;
 
 					source.start(0);
 				}
@@ -67,7 +66,7 @@
 
 	$effect(() => {
 		if (gainNode) {
-			gainNode.gain.value = volume;
+			gainNode.gain.value = general.volume;
 		}
 	});
 </script>

@@ -1,12 +1,6 @@
 <script>
+	import { general, menu } from '$lib/stores.svelte';
 	import { onMount } from 'svelte';
-
-	let {
-		showMenu = $bindable(),
-		volume = $bindable(),
-		score = $bindable(),
-		previousScore = $bindable(),
-	} = $props();
 
 	const options = ['Scoreboard', 'How to play'];
 	let playedBefore = $state(false);
@@ -51,10 +45,10 @@
 
 	const playButtonHandler = () => {
 		if (playedBefore) {
-			previousScore = score;
+			general.previousScore = general.score;
 		}
-		score = 0;
-		showMenu = false;
+		general.score = 0;
+		menu.show = false;
 		playedBefore = true;
 	};
 
@@ -63,16 +57,16 @@
 
 	// updates localStorage for persistence of user preference
 	$effect(() => {
-		localStorage.setItem('volume', volume);
+		localStorage.setItem('volume', general.volume);
 	});
 	$effect(() => {
-		if (score != 0) {
-			localStorage.setItem('previousScore', score);
+		if (general.score != 0) {
+			localStorage.setItem('previousScore', general.score);
 		}
 	});
 </script>
 
-<div class="flex justify-center {showMenu ? '' : 'hidden'}">
+<div class="flex justify-center {menu.show ? '' : 'hidden'}">
 	<div class="menu w-[800px] h-[400px] m-[50px] flex flex-col rounded-lg p-2">
 		<div class="flex justify-end [&>*]:m-1">
 			<div class="volume">
@@ -84,7 +78,7 @@
 					min="0"
 					max="1"
 					step="0.01"
-					bind:value={volume}
+					bind:value={general.volume}
 				/>
 			</div>
 			<button class="pill-btn" onclick={toggleFullscreen}>
@@ -113,9 +107,9 @@
 			<main class="panel-main grow">
 				{#if optionSelected == 'Scoreboard'}
 					<h2>Scoreboard</h2>
-					Score: {score}
-					{#if previousScore !== null}
-						Previous Score: {previousScore}
+					Score: {general.score}
+					{#if general.previousScore !== null}
+						Previous Score: {general.previousScore}
 					{/if}
 				{:else if optionSelected == 'How to play'}
 					<h2>How to play</h2>

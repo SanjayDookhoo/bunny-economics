@@ -2,418 +2,56 @@
 	import { onDestroy, onMount } from 'svelte';
 	import StarburstSVG from './StarburstSVG.svelte';
 	import forest from '../assets/forest.png';
-	import bellImg from '../assets/bell.png';
 	import Menu from './Menu.svelte';
 	import IdleMusic from './IdleMusic.svelte';
-	import { fxPopShine } from '../lib/collisionEffects';
+	import Bunny from './Bunny.svelte';
+	import Bells from './Bells.svelte';
+	import Starbursts from './Starbursts.svelte';
+	import {
+		bunnyPosition,
+		cameraPanning,
+		gameWindowDimensions,
+		general,
+		menu,
+	} from '$lib/stores.svelte';
+	import BunnyHandler from './BunnyHandler.svelte';
+	import {
+		BUNNY_HITBOX_WIDTH,
+		DESPAWN_BELL_APPROACHING_GROUND_AT_PX,
+		Y_JUMP,
+	} from '$lib/constants';
+	import { globals } from '$lib/utils';
 
 	let { scale } = $props();
-
-	const BUNNY_GROUND_X_AXIS_MAX_DELTA = 15;
-	const BUNNY_SKY_X_AXIS_MAX_DELTA = 30;
-	const BUNNY_HITBOX_WIDTH = 64;
-	const BUNNY_HITBOX_HEIGHT = 64;
-	const BELL_HITBOX_WIDTH = 64;
-	const BELL_HITBOX_HEIGHT = 64;
-	const BELLS_MAX_COUNT = 14;
-	const BELL_POSITION_Y_VARIANCE_AMOUNT = 20;
-	const Y_BETWEEN_BELLS_BASE_HEIGHT = 150;
-	const BELLS_AUTO_FALL_SPEED_PER_SEC = 30;
-	const Y_JUMP = 370;
-	const MAX_FREE_FALL_SPEED = -35;
-	const HORIZONTAL_INTERACTIVE_PADDING = 40;
-	const STARBURST_HEIGHT_RANGE = 50;
-	const STARBURST_COUNT_PER_RANGE = 3;
-	const DESPAWN_BELLS_BELOW_CURRENT_USER_LOCATION_BELLS = 6;
-	const DESPAWN_STARBURST_OUT_OF_Y_RANGE = 800;
-	const DESPAWN_BELL_APPROACHING_GROUND_AT_PX = 300;
-	const STARBURST_BASE_HEIGHT_AND_WIDTH = 15;
-	const STARBURST_BASE_OPACITY = 15;
-	const STARBURST_ID_START = 5;
-	const FIRST_BELL_Y_POSITION_PX = 200;
-	const DEFAULT_VOLUME = 0.5;
-
-	let bunnyGoalPositionYPrevForFallHandle;
-	let collidedThereforeGameStarted = false;
-	let latestBellId = 1;
-	let latestStarburstRowId = STARBURST_ID_START;
-	let latestBellPositionY = 0;
-	let inMaxFreeFallSpeed = 0;
-
-	let bunnyGoalPositionY = $state(0);
-	let bunnyGoalPositionX = $state(undefined);
-	let bunnyPositionX = $state(undefined);
-	let bunnyPositionY = $state(0);
-	let cameraPanningY = $state(0);
-	let cameraGoalY = $state(0);
-	let bunnyFacingDirection = $state('right');
-	let gameWindowDimensions = $state({
-		width: 0,
-		height: 0,
-		minXAxisValue: 0,
-		maxXAxisValue: 0,
-		minYAxisValue: 0,
-		maxYAxisValue: 0,
-	});
-
-	let bellsObj = $state({});
-	let starburstsObj = $state({});
-	let scrollingBellsStartingPositionY = $state(250);
 	let gameWindowRef = $state();
-	let volume = $state(
-		localStorage.getItem('volume')
-			? parseFloat(localStorage.getItem('volume'))
-			: DEFAULT_VOLUME
-	);
-
-	let showMenu = $state(true);
 	let score = $state(0);
-	let previousScore = $state(
-		localStorage.getItem('previousScore')
+
+	// set persisted state if possible
+	onMount(() => {
+		general.volume = localStorage.getItem('volume')
+			? parseFloat(localStorage.getItem('volume'))
+			: DEFAULT_VOLUME;
+		general.previousScore = localStorage.getItem('previousScore')
 			? parseInt(localStorage.getItem('previousScore'))
-			: null
-	);
-
-	const updateCamera = (dt, bunnyPositionY) => {
-		const tau = inMaxFreeFallSpeed ? 0 : 0.15; // smoothing: smaller = snappier, when in freefall make the camera snap faster, so the user doesnt go out of bounds because the camera cant keep up with the user falling
-		const deadMin =
-			(bunnyPositionY > 250 ? 0.2 : 0) * gameWindowDimensions.height; // 20% from bottom, the bunnyPositionY check ensures that when the game starts, the user remains planted on the ground, instead of the camera going lower than ground attempting to keep the user at the 20%  point
-		const deadMax = 0.4 * gameWindowDimensions.height; // 40% from bottom
-
-		// Where is the player on screen (from bottom)?
-		const playerScreenY = bunnyPositionY - cameraPanningY;
-
-		// Desired camera y (only change if player left the band)
-		let cameraGoalY = cameraPanningY;
-		if (playerScreenY < deadMin) {
-			cameraGoalY = bunnyPositionY - deadMin; // push camera down
-		} else if (playerScreenY > deadMax) {
-			cameraGoalY = bunnyPositionY - deadMax; // push camera up
-		}
-
-		// Smooth move: exponential smoothing toward desired
-		const a = 1 - Math.exp(-dt / tau);
-		cameraPanningY += (cameraGoalY - cameraPanningY) * a;
-	};
-
-	onMount(() => {
-		let raf,
-			prev = performance.now();
-		function frame(now) {
-			const dt = Math.min(0.1, (now - prev) / 1000);
-			prev = now;
-
-			updateCamera(dt, bunnyPositionY);
-
-			requestAnimationFrame(frame);
-		}
-		raf = requestAnimationFrame(frame);
-		return () => cancelAnimationFrame(raf);
+			: null;
 	});
 
-	const getRandomFloatInclusive = (start, end) => {
-		return Math.random() * (end - start) + start;
-	};
-
-	const createNewBell = () => {
-		latestBellId++;
-
-		const currentBellId = latestBellId;
-		const intervalId = setInterval(() => {
-			checkIfCollideWithBell(currentBellId);
-		}, 10);
-
-		const YVariance = getRandomFloatInclusive(
-			0,
-			BELL_POSITION_Y_VARIANCE_AMOUNT
-		);
-		const YPositionPX =
-			latestBellPositionY + Y_BETWEEN_BELLS_BASE_HEIGHT + YVariance;
-
-		const bell = {
-			YPositionPX,
-			XPositionPX: getRandomFloatInclusive(
-				gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING,
-				gameWindowDimensions.maxXAxisValue -
-					BUNNY_HITBOX_WIDTH -
-					HORIZONTAL_INTERACTIVE_PADDING
-			),
-			hidden: false,
-		};
-
-		bellsObj[latestBellId] = bell;
-		latestBellPositionY = YPositionPX;
-	};
-
-	// ensures on hot reload the intervals for collision check are cleared
-	onDestroy(() => {
-		for (const { intervalId } of Object.values(bellsObj)) {
-			clearInterval(intervalId);
-		}
-	});
-
-	$effect(() => {
-		if (!showMenu) {
-			latestBellPositionY = FIRST_BELL_Y_POSITION_PX;
-			scrollingBellsStartingPositionY = 0;
-			for (let index = 0; index < BELLS_MAX_COUNT; index++) {
-				createNewBell();
-			}
-			for (
-				let index = 0;
-				index < BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE;
-				index++
-			) {
-				createNewStarburst(true);
-			}
-		}
-	});
-
-	const removeStarburst = (starburstId) => {
-		delete starburstsObj[starburstId];
-	};
-
-	const removeAndCreateNewStarburst = (starburstId, isAscending) => {
-		removeStarburst(starburstId);
-		createNewStarburst(isAscending);
-	};
-
-	const createNewStarburst = (isAscending) => {
-		let starburst;
-		const YVariance = getRandomFloatInclusive(
-			0,
-			BELL_POSITION_Y_VARIANCE_AMOUNT
-		);
-		if (isAscending) {
-			latestStarburstRowId++;
-			starburst = {
-				YPositionPX: getRandomFloatInclusive(
-					latestStarburstRowId * STARBURST_HEIGHT_RANGE,
-					latestStarburstRowId * (STARBURST_HEIGHT_RANGE + 1)
-				),
-				XPositionPX: getRandomFloatInclusive(
-					gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING,
-					gameWindowDimensions.maxXAxisValue -
-						BUNNY_HITBOX_WIDTH -
-						HORIZONTAL_INTERACTIVE_PADDING
-				),
-				multiplier: getRandomFloatInclusive(1, 2),
-			};
-		} else {
-			latestStarburstRowId--;
-			starburst = {
-				YPositionPX: getRandomFloatInclusive(
-					(latestStarburstRowId - BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE) *
-						STARBURST_HEIGHT_RANGE,
-					(latestStarburstRowId - BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE) *
-						(STARBURST_HEIGHT_RANGE + 1)
-				),
-				XPositionPX: getRandomFloatInclusive(
-					gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING,
-					gameWindowDimensions.maxXAxisValue -
-						BUNNY_HITBOX_WIDTH -
-						HORIZONTAL_INTERACTIVE_PADDING
-				),
-				multiplier: getRandomFloatInclusive(1, 2),
-			};
-		}
-
-		starburstsObj[crypto.randomUUID()] = starburst;
-	};
-
-	// bells scroll
-	onMount(() => {
-		let raf,
-			prev = performance.now();
-
-		const tick = (now) => {
-			const dt = Math.min(0.1, Math.max(0, (now - prev) / 1000)); // seconds
-			prev = now;
-
-			scrollingBellsStartingPositionY -= BELLS_AUTO_FALL_SPEED_PER_SEC * dt;
-
-			raf = requestAnimationFrame(tick);
-		};
-
-		raf = requestAnimationFrame(tick);
-		return () => cancelAnimationFrame(raf);
-	});
-
-	// check on interval
-	// onmount here used to prevent hot reloading from stacking multiple intervals
-	onMount(() => {
-		let X_SPEED_PX_PER_SEC;
-		let raf;
-		let prev = performance.now();
-
-		const tick = (now) => {
-			if (bunnyPositionY == 0) {
-				X_SPEED_PX_PER_SEC = BUNNY_GROUND_X_AXIS_MAX_DELTA * 60;
-			} else {
-				X_SPEED_PX_PER_SEC = BUNNY_SKY_X_AXIS_MAX_DELTA * 60;
-			}
-
-			const dt = Math.min(0.1, Math.max(0, (now - prev) / 1000)); // seconds
-			prev = now;
-
-			if (bunnyPositionX !== undefined && bunnyGoalPositionX !== undefined) {
-				const minX =
-					gameWindowDimensions.minXAxisValue + HORIZONTAL_INTERACTIVE_PADDING;
-				const maxX =
-					gameWindowDimensions.maxXAxisValue -
-					BUNNY_HITBOX_WIDTH -
-					HORIZONTAL_INTERACTIVE_PADDING;
-
-				// clamp goal to bounds
-				bunnyGoalPositionX = Math.max(minX, Math.min(maxX, bunnyGoalPositionX));
-
-				if (bunnyPositionX < minX) {
-					bunnyPositionX = bunnyGoalPositionX = minX;
-				} else if (bunnyPositionX > maxX) {
-					bunnyPositionX = bunnyGoalPositionX = maxX;
-				} else {
-					const dx = bunnyGoalPositionX - bunnyPositionX;
-					const step = X_SPEED_PX_PER_SEC * dt;
-
-					if (Math.abs(dx) <= step) {
-						bunnyPositionX = bunnyGoalPositionX; // snap when close
-					} else {
-						bunnyPositionX += Math.sign(dx) * step;
-					}
-				}
-			}
-
-			raf = requestAnimationFrame(tick);
-		};
-
-		raf = requestAnimationFrame(tick);
-		return () => cancelAnimationFrame(raf);
-	});
-
-	// check on interval
-	// onmount here used to prevent hot reloading from stacking multiple intervals
-	onMount(() => {
-		const TAU_Y = 0.12; // smaller = snappier, larger = floatier
-		let raf;
-		let prev = performance.now();
-
-		const tick = (now) => {
-			const dt = Math.min(0.1, (now - prev) / 1000); // seconds, clamp big pauses
-			prev = now;
-
-			if (bunnyPositionY === undefined || bunnyGoalPositionY === undefined) {
-				raf = requestAnimationFrame(tick);
-				return;
-			}
-
-			const minY = gameWindowDimensions.minYAxisValue;
-			const maxY = gameWindowDimensions.maxYAxisValue - BUNNY_HITBOX_WIDTH;
-
-			if (Math.abs(bunnyGoalPositionY - bunnyPositionY) < 1) {
-				// snap when extremely close to avoid a long tiny tail
-				// bunnyPositionY = bunnyGoalPositionY;
-				bunnyGoalPositionY = 0; // simulate falling
-			} else {
-				if (bunnyGoalPositionY > bunnyPositionY) {
-					const a = 1 - Math.exp(-dt / TAU_Y);
-					const delta = (bunnyGoalPositionY - bunnyPositionY) * a;
-					if (delta >= 0.2) {
-						bunnyPositionY += delta;
-					} else {
-						bunnyGoalPositionYPrevForFallHandle = bunnyGoalPositionY;
-						bunnyGoalPositionY = 0; // simulate falling
-					}
-				} else {
-					const a = 1 - Math.exp(-dt / TAU_Y);
-					const _delta =
-						(bunnyGoalPositionYPrevForFallHandle - bunnyPositionY) * a * -1;
-					const delta = Math.max(MAX_FREE_FALL_SPEED, _delta); // min fall speed capped
-					if (delta == MAX_FREE_FALL_SPEED) {
-						inMaxFreeFallSpeed = 1;
-					}
-					if (bunnyPositionY + delta < 0) {
-						bunnyPositionY = 0;
-					} else {
-						bunnyPositionY += delta;
-					}
-				}
-			}
-
-			raf = requestAnimationFrame(tick);
-		};
-
-		raf = requestAnimationFrame(tick);
-		return () => cancelAnimationFrame(raf);
-	});
-
-	// handle horizontal mouse move
-	onMount(() => {
-		if (!gameWindowRef) return;
-
-		const handleMouseMove = (e) => {
-			const rect = gameWindowRef.getBoundingClientRect();
-			// X position relative to the element
-			const mousePositionXTemp =
-				(e.clientX - rect.left) / scale - BUNNY_HITBOX_WIDTH / 2;
-			if (
-				mousePositionXTemp >= gameWindowDimensions.minXAxisValue &&
-				mousePositionXTemp <=
-					gameWindowDimensions.maxXAxisValue - BUNNY_HITBOX_WIDTH
-			) {
-				bunnyGoalPositionX = mousePositionXTemp;
-
-				if (mousePositionXTemp <= bunnyPositionX) {
-					bunnyFacingDirection = 'left';
-				} else {
-					bunnyFacingDirection = 'right';
-				}
-			}
-		};
-
-		gameWindowRef.addEventListener('mousemove', handleMouseMove);
-
-		return () => {
-			gameWindowRef.removeEventListener('mousemove', handleMouseMove);
-		};
-	});
-
-	// mouse click to jump
-	onMount(() => {
-		if (!gameWindowRef) return;
-
-		const handleClick = (e) => {
-			if (e.button !== 0) return; // only allow left click
-			if (bunnyPositionY != 0) return;
-			if (collidedThereforeGameStarted) return;
-			if (showMenu) return;
-			bunnyGoalPositionY += Y_JUMP;
-		};
-
-		gameWindowRef.addEventListener('click', handleClick);
-
-		return () => {
-			gameWindowRef.removeEventListener('click', handleClick);
-		};
-	});
+	// TODO: area cleaned up
 
 	// gameWindowDimensions
 	onMount(() => {
 		if (!gameWindowRef) return;
 
-		// initialize bunnyPositionX to the center
-		bunnyPositionX =
+		// initialize bunnyPosition.x to the center
+		bunnyPosition.x =
 			gameWindowRef.getBoundingClientRect().width / 2 - BUNNY_HITBOX_WIDTH / 2;
 
 		const updateDimensions = () => {
 			const rect = gameWindowRef.getBoundingClientRect();
-			gameWindowDimensions = {
-				width: rect.width,
-				height: rect.height,
-				minXAxisValue: 0,
-				maxXAxisValue: rect.width,
-				minYAxisValue: 0,
-				maxYAxisValue: rect.height,
-			};
+			gameWindowDimensions.width = rect.width;
+			gameWindowDimensions.height = rect.height;
+			gameWindowDimensions.maxXAxisValue = rect.width;
+			gameWindowDimensions.maxYAxisValue = rect.height;
 		};
 
 		const resizeObserver = new ResizeObserver(() => {
@@ -428,254 +66,43 @@
 		};
 	});
 
-	const checkIfCollideWithBell = (bellId) => {
-		const bell = document.getElementById(`bell-${bellId}`);
-		const user = document.getElementById('user');
-		if (!bell || !user) return;
-
-		var rect1 = bell.getBoundingClientRect();
-		var rect2 = user.getBoundingClientRect();
-
-		// if collides
-		if (
-			!(
-				rect1.top > rect2.bottom ||
-				rect1.right < rect2.left ||
-				rect1.bottom < rect2.top ||
-				rect1.left > rect2.right
-			)
-		) {
-			handleCollide(bellId);
-		}
-	};
-
-	const removeBell = (bellId) => {
-		clearInterval(bellsObj[bellId].intervalId);
-		delete bellsObj[bellId];
-	};
-
-	const removeAndCreateNewBell = (bellId) => {
-		removeBell(bellId);
-		createNewBell();
-	};
-
-	const handleCollide = (bellId) => {
-		if (!collidedThereforeGameStarted) {
-			collidedThereforeGameStarted = true;
-		}
-
-		if (bellsObj[bellId].collided) return;
-
-		bellsObj[bellId].collided = true;
-
-		const audio = new Audio('./collectbell.mp3');
-		audio.volume = volume;
-		audio.play();
-
-		clearInterval(bellsObj[bellId].intervalId);
-		bellsObj[bellId].hidden = true;
-		setTimeout(() => {
-			delete bellsObj[bellId];
-		}, 2000);
-		createNewBell();
-		fxPopShine(document.getElementById('bell-' + bellId), 10);
-
-		bunnyGoalPositionY = bunnyPositionY + BELL_HITBOX_HEIGHT + Y_JUMP;
-		inMaxFreeFallSpeed = 0;
-
-		score += 10;
-	};
-
-	onMount(() => {
-		const intervalId = setInterval(() => {
-			let minId = -1;
-			let minValue = Infinity;
-			for (const [bellId, bell] of Object.entries(bellsObj)) {
-				if (bell.YPositionPX < minValue) {
-					minValue = bell.YPositionPX;
-					minId = bellId;
-				}
-			}
-			if (minId != -1) {
-				const lowestYPositionPX = minValue;
-
-				if (
-					scrollingBellsStartingPositionY + lowestYPositionPX <
-					DESPAWN_BELL_APPROACHING_GROUND_AT_PX
-				) {
-					removeAndCreateNewBell(minId);
-				}
-			}
-		}, 50);
-
-		return () => clearInterval(intervalId);
-	});
-
-	// remove all bells that is generally lower than DESPAWN_BELLS_BELOW_CURRENT_USER_LOCATION_BELLS bells below current userPosition
-	onMount(() => {
-		const intervalId = setInterval(() => {
-			for (const [bellId, bell] of Object.entries(bellsObj)) {
-				if (
-					bell.YPositionPX <
-					bunnyPositionY -
-						Y_BETWEEN_BELLS_BASE_HEIGHT *
-							DESPAWN_BELLS_BELOW_CURRENT_USER_LOCATION_BELLS
-				) {
-					removeAndCreateNewBell(bellId);
-				}
-			}
-		}, 50);
-
-		return () => clearInterval(intervalId);
-	});
-
-	// remove all starburst that is out of range in the opposite direction (up or down) heading towards
-	onMount(() => {
-		const intervalId = setInterval(() => {
-			if (!inMaxFreeFallSpeed) {
-				for (const [starburstId, starburst] of Object.entries(starburstsObj)) {
-					if (
-						starburst.YPositionPX <
-						bunnyPositionY - DESPAWN_STARBURST_OUT_OF_Y_RANGE
-					) {
-						removeAndCreateNewStarburst(starburstId, true);
-					}
-				}
-			} else {
-				for (const [starburstId, starburst] of Object.entries(starburstsObj)) {
-					if (
-						latestStarburstRowId >
-						BELLS_MAX_COUNT * STARBURST_COUNT_PER_RANGE + STARBURST_ID_START
-					) {
-						if (
-							starburst.YPositionPX >
-							bunnyPositionY + DESPAWN_STARBURST_OUT_OF_Y_RANGE
-						) {
-							removeAndCreateNewStarburst(starburstId, false);
-						}
-					}
-				}
-			}
-		}, 50);
-
-		return () => clearInterval(intervalId);
-	});
-
 	// detect bunny has fallen, game has ended
 	onMount(() => {
 		const intervalId = setInterval(() => {
-			if (collidedThereforeGameStarted && bunnyPositionY == 0) {
-				showMenu = true;
-				collidedThereforeGameStarted = false;
-				for (const bellId of Object.keys(bellsObj)) {
-					removeBell(bellId);
-				}
-				for (const starburstId of Object.keys(starburstsObj)) {
-					removeStarburst(starburstId);
-				}
+			if (globals.collidedThereforeGameStarted && bunnyPosition.y == 0) {
+				menu.show = true;
+				globals.collidedThereforeGameStarted = false;
 			}
 		}, 10);
 
 		return () => clearInterval(intervalId);
 	});
+
+	// TODO: end of cleanup
 </script>
 
 <div
 	bind:this={gameWindowRef}
 	class="relative rounded-lg grow w-full h-full overflow-hidden bg-gray-800 select-none"
 >
-	<IdleMusic {volume} />
-	<Menu bind:showMenu bind:volume bind:score bind:previousScore />
+	{#if gameWindowRef}
+		<IdleMusic />
+		<Menu />
 
-	<div
-		class="absolute w-full flex items-center h-[{DESPAWN_BELL_APPROACHING_GROUND_AT_PX}px]"
-		style="bottom: {-cameraPanningY - 150}px;"
-	>
-		<img src={forest} class="w-[850px]" alt="forest 1" />
-		<img src={forest} class="w-[850px]" alt="forest 2" />
-		<img src={forest} class="w-[850px]" alt="forest 3" />
-	</div>
+		<div
+			class="absolute w-full flex items-center h-[{DESPAWN_BELL_APPROACHING_GROUND_AT_PX}px]"
+			style="bottom: {-cameraPanning.y - 150}px;"
+		>
+			<img src={forest} class="w-[850px]" alt="forest 1" />
+			<img src={forest} class="w-[850px]" alt="forest 2" />
+			<img src={forest} class="w-[850px]" alt="forest 3" />
+		</div>
 
-	{#if !showMenu}
-		<div class="absolute top-[10px] left-[10px] text-white">{score}</div>
-		{#each Object.entries(starburstsObj) as [starburstId, starburst] (starburstId)}
-			<div
-				class="text-white absolute"
-				id="starburst-{starburstId}"
-				style="height: {STARBURST_BASE_HEIGHT_AND_WIDTH *
-					starburst.multiplier}px; width: {STARBURST_BASE_HEIGHT_AND_WIDTH *
-					starburst.multiplier}px; bottom: {starburst.YPositionPX -
-					cameraPanningY}px; left:{starburst.XPositionPX}px; opacity: {STARBURST_BASE_OPACITY *
-					starburst.multiplier}%;"
-			>
-				<StarburstSVG />
-			</div>
-		{/each}
-		{#each Object.entries(bellsObj) as [bellId, bell] (bellId)}
-			<div
-				id="bell-{bellId}"
-				class="absolute"
-				style="height: {BUNNY_HITBOX_HEIGHT}px; width: {BUNNY_HITBOX_WIDTH}px; bottom: {scrollingBellsStartingPositionY +
-					bell.YPositionPX -
-					cameraPanningY}px; left:{bell.XPositionPX}px;"
-			>
-				<img
-					class="swing-bell fade-in"
-					src={bellImg}
-					alt="bell"
-					style="visibility: {bell.hidden ? 'hidden' : 'visible'}"
-				/>
-			</div>
-		{/each}
+		{#if !menu.show}
+			<div class="absolute top-[10px] left-[10px] text-white">{score}</div>
+		{/if}
+		<Starbursts />
+		<Bells {gameWindowRef} />
+		<BunnyHandler {gameWindowRef} {scale} />
 	{/if}
-
-	<div
-		id="user"
-		class="absolute rounded-full bg-gray-500 fade-in-out"
-		style="height: {BUNNY_HITBOX_HEIGHT}px; width: {BUNNY_HITBOX_WIDTH}px; bottom: {bunnyPositionY -
-			cameraPanningY}px; left:{bunnyPositionX}px; opacity: {showMenu ? 0 : 1}"
-	></div>
 </div>
-
-<style>
-	.swing-bell {
-		display: block;
-		width: 64px;
-		height: 64px;
-		animation: swing 2s linear infinite;
-		transform-origin: 50% 0%; /* pivot at top center */
-	}
-
-	@keyframes swing {
-		0% {
-			transform: rotate(0deg);
-		}
-		25% {
-			transform: rotate(5deg);
-		}
-		50% {
-			transform: rotate(0deg);
-		}
-		75% {
-			transform: rotate(-5deg);
-		}
-		100% {
-			transform: rotate(0deg);
-		}
-	}
-
-	.fade-in-out {
-		transition: opacity 0.8s ease;
-	}
-
-	.fade-in {
-		opacity: 0;
-		animation: fadeIn 0.8s ease forwards; /* duration = 0.8s */
-	}
-
-	@keyframes fadeIn {
-		to {
-			opacity: 1;
-		}
-	}
-</style>
