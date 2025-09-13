@@ -7,7 +7,7 @@
 		BUNNY_HITBOX_HEIGHT,
 		BUNNY_HITBOX_WIDTH,
 		DESPAWN_BELL_APPROACHING_GROUND_AT_PX,
-		DESPAWN_BELLS_BELOW_CURRENT_USER_LOCATION_BELLS,
+		DESPAWN_BELLS_BELOW_CURRENT_BUNNY_LOCATION_BELLS,
 		FIRST_BELL_Y_POSITION_PX,
 		HORIZONTAL_INTERACTIVE_PADDING,
 		Y_BETWEEN_BELLS_BASE_HEIGHT,
@@ -109,11 +109,11 @@
 
 	const checkIfCollideWithBell = (bellId) => {
 		const bell = document.getElementById(`bell-${bellId}`);
-		const user = document.getElementById('user');
-		if (!bell || !user) return;
+		const bunny = document.getElementById('bunny');
+		if (!bell || !bunny) return;
 
 		var rect1 = bell.getBoundingClientRect();
-		var rect2 = user.getBoundingClientRect();
+		var rect2 = bunny.getBoundingClientRect();
 
 		// if collides
 		if (
@@ -190,7 +190,7 @@
 		return () => clearInterval(intervalId);
 	});
 
-	// remove all bells that is generally lower than DESPAWN_BELLS_BELOW_CURRENT_USER_LOCATION_BELLS bells below current userPosition
+	// remove all bells that is generally lower than DESPAWN_BELLS_BELOW_CURRENT_BUNNY_LOCATION_BELLS bells below current bunnyPosition
 	onMount(() => {
 		const intervalId = setInterval(() => {
 			for (const [bellId, bell] of Object.entries(bellsObj)) {
@@ -198,7 +198,7 @@
 					bell.YPositionPX <
 					bunnyPosition.y -
 						Y_BETWEEN_BELLS_BASE_HEIGHT *
-							DESPAWN_BELLS_BELOW_CURRENT_USER_LOCATION_BELLS
+							DESPAWN_BELLS_BELOW_CURRENT_BUNNY_LOCATION_BELLS
 				) {
 					removeAndCreateNewBell(bellId);
 				}

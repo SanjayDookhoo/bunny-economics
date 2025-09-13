@@ -23,9 +23,9 @@
 	let bunnyFacingDirection = $state('right');
 
 	const updateCamera = (dt) => {
-		const tau = globals.inMaxFreeFallSpeed ? 0 : 0.15; // smoothing: smaller = snappier, when in freefall make the camera snap faster, so the user doesnt go out of bounds because the camera cant keep up with the user falling
+		const tau = globals.inMaxFreeFallSpeed ? 0 : 0.15; // smoothing: smaller = snappier, when in freefall make the camera snap faster, so the bunny doesnt go out of bounds because the camera cant keep up with the bunny falling
 		const deadMin =
-			(bunnyPosition.y > 250 ? 0.2 : 0) * gameWindowDimensions.height; // 20% from bottom, the bunnyPosition.y check ensures that when the game starts, the user remains planted on the ground, instead of the camera going lower than ground attempting to keep the user at the 20%  point
+			(bunnyPosition.y > 250 ? 0.2 : 0) * gameWindowDimensions.height; // 20% from bottom, the bunnyPosition.y check ensures that when the game starts, the bunny remains planted on the ground, instead of the camera going lower than ground attempting to keep the bunny at the 20%  point
 		const deadMax = 0.4 * gameWindowDimensions.height; // 40% from bottom
 
 		// Where is the player on screen (from bottom)?
