@@ -39,7 +39,7 @@
 					<div class="pl-2">About</div>
 				</a>
 				<a
-					href="https://github.com/SanjayDookhoo/hareconomics2"
+					href="https://github.com/SanjayDookhoo/bunny-economics"
 					class="flex items-center"
 				>
 					<img
