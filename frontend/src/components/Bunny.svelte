@@ -1,8 +1,10 @@
 <script>
 	import {
+		APEX_RANGE,
 		BUNNY_HITBOX_HEIGHT,
 		BUNNY_HITBOX_WIDTH,
 		BUNNY_SPRITE_ANIMATIONS_MAP,
+		HOPPING_INITIAL_ANGLE,
 	} from '$lib/constants';
 	import {
 		bunnyPosition,
@@ -10,7 +12,7 @@
 		cameraPanning,
 		menu,
 	} from '$lib/stores.svelte';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 
 	let { bunnyFacingDirection, bunnyGoalPositionYPrevForFallHandle } = $props();
 
@@ -28,6 +30,10 @@
 	let bunnySpriteRunningFrame = 1;
 
 	const SCALE = 0.3;
+
+	onDestroy(() => {
+		clearInterval(bunnySpriteAnimationInterval);
+	});
 
 	$effect(() => {
 		bunnySpriteFlip = bunnyFacingDirection == 'right';
@@ -68,24 +74,25 @@
 				const hoppingAnimations = BUNNY_SPRITE_ANIMATIONS_MAP['hopping'];
 
 				let angle;
-				const apexRange = 60;
 				if (bunnyGoalPosition.y > bunnyPosition.y) {
-					if (bunnyGoalPosition.y - bunnyPosition.y < apexRange) {
-						angle = ((bunnyGoalPosition.y - bunnyPosition.y) / apexRange) * 30;
+					if (bunnyGoalPosition.y - bunnyPosition.y < APEX_RANGE) {
+						angle =
+							((bunnyGoalPosition.y - bunnyPosition.y) / APEX_RANGE) *
+							HOPPING_INITIAL_ANGLE;
 					} else {
-						angle = 30;
+						angle = HOPPING_INITIAL_ANGLE;
 					}
 				} else {
 					if (
 						Math.abs(bunnyPosition.y - bunnyGoalPositionYPrevForFallHandle) <
-						apexRange
+						APEX_RANGE
 					) {
 						angle =
 							((bunnyPosition.y - bunnyGoalPositionYPrevForFallHandle) /
-								apexRange) *
-							30;
+								APEX_RANGE) *
+							HOPPING_INITIAL_ANGLE;
 					} else {
-						angle = -30;
+						angle = -HOPPING_INITIAL_ANGLE;
 					}
 				}
 
@@ -96,8 +103,6 @@
 			}, 10);
 		}
 	});
-
-	// $inspect(bunnySpriteAnimationFrame);
 </script>
 
 <div

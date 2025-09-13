@@ -3,13 +3,13 @@ const getRandomFloatInclusive = (start, end) => {
 };
 
 // Make sure absolute children are positioned relative to `el`
-function ensurePositioned(el) {
+const ensurePositioned = (el) => {
 	const pos = getComputedStyle(el).position;
 	if (pos === 'static' || !pos) el.style.position = 'relative';
-}
+};
 
 /** Spawn N particles relative to `el` at local x,y */
-function particleBurst(el, opts) {
+const particleBurst = (el, opts) => {
 	ensurePositioned(el);
 
 	const {
@@ -45,7 +45,7 @@ function particleBurst(el, opts) {
 
 		const start = performance.now();
 		const life = getRandomFloatInclusive(lifeMin, lifeMax);
-		function move(t) {
+		const move = (t) => {
 			const dt = (t - start) / 1000;
 			const k = (t - start) / life;
 			if (k >= 1) {
@@ -59,28 +59,29 @@ function particleBurst(el, opts) {
 			}rad)`;
 			p.style.opacity = String(1 - k);
 			requestAnimationFrame(move);
-		}
+		};
 		requestAnimationFrame(move);
 	}
-}
+};
 
 /** Spawn a floating "+points" text that rises & fades (local to `el`) */
-function floatText(el, x, y, text = '+10', color = '#fff') {
+const floatText = (el, x, y, text, color = '#fff') => {
 	ensurePositioned(el);
 
 	const elText = document.createElement('div');
 	elText.className = 'float-text';
 	elText.textContent = text;
-	elText.style.left = `${x}px`;
-	elText.style.top = `${y}px`;
+	elText.style.left = `${x + 80}px`;
+	elText.style.top = `${y - 80}px`;
 	elText.style.color = color;
+	elText.style.fontSize = '30px';
 	el.appendChild(elText);
 
 	const start = performance.now();
 	const life = 700; // ms
 	const dx = Math.random() * 40 - 20;
 
-	function tick(t) {
+	const tick = (t) => {
 		const k = Math.min(1, (t - start) / life);
 		const ease = 1 - Math.pow(1 - k, 3);
 		elText.style.opacity = `${1 - ease}`;
@@ -89,19 +90,19 @@ function floatText(el, x, y, text = '+10', color = '#fff') {
 		}px) scale(${1 + 0.2 * (1 - ease)})`;
 		if (k < 1) requestAnimationFrame(tick);
 		else elText.remove();
-	}
+	};
 	requestAnimationFrame(tick);
-}
+};
 
 /** Expanding glow ring (local to `el`) */
-function ringPulse(
+const ringPulse = (
 	el,
 	x,
 	y,
 	r = 16,
 	color = 'rgba(255,255,255,0.85)',
 	stroke = 3
-) {
+) => {
 	ensurePositioned(el);
 
 	const ring = document.createElement('div');
@@ -115,7 +116,7 @@ function ringPulse(
 
 	const start = performance.now(),
 		life = 350;
-	function anim(t) {
+	const anim = (t) => {
 		const k = Math.min(1, (t - start) / life);
 		const ease = 1 - Math.pow(1 - k, 3);
 		const scale = 1 + 2.2 * ease;
@@ -123,9 +124,9 @@ function ringPulse(
 		ring.style.opacity = String(1 - ease);
 		if (k < 1) requestAnimationFrame(anim);
 		else ring.remove();
-	}
+	};
 	requestAnimationFrame(anim);
-}
+};
 
 export const fxPopShine = (el, points) => {
 	// Optional element scale pop (matches your original)

@@ -23,7 +23,7 @@
 				let buffer;
 				let source;
 
-				async function loadAudio() {
+				const loadAudio = async () => {
 					if (!audioContext) {
 						audioContext = new (window.AudioContext ||
 							window.webkitAudioContext)();
@@ -34,9 +34,9 @@
 					const response = await fetch('./idle.mp3'); // adjust path if needed
 					const arrayBuffer = await response.arrayBuffer();
 					buffer = await audioContext.decodeAudioData(arrayBuffer);
-				}
+				};
 
-				async function playLoop() {
+				const playLoop = async () => {
 					if (!buffer) await loadAudio();
 
 					// Create a new source each time you play
@@ -49,7 +49,7 @@
 					gainNode.gain.value = general.volume;
 
 					source.start(0);
-				}
+				};
 
 				playLoop();
 				removeListeners();

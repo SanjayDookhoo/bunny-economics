@@ -1,6 +1,5 @@
 <script>
 	import { onDestroy, onMount } from 'svelte';
-	import StarburstSVG from './StarburstSVG.svelte';
 	import forest from '../assets/forest.png';
 	import Menu from './Menu.svelte';
 	import IdleMusic from './IdleMusic.svelte';
@@ -24,7 +23,6 @@
 
 	let { scale } = $props();
 	let gameWindowRef = $state();
-	let score = $state(0);
 
 	// set persisted state if possible
 	onMount(() => {
@@ -35,8 +33,6 @@
 			? parseInt(localStorage.getItem('previousScore'))
 			: null;
 	});
-
-	// TODO: area cleaned up
 
 	// gameWindowDimensions
 	onMount(() => {
@@ -77,8 +73,6 @@
 
 		return () => clearInterval(intervalId);
 	});
-
-	// TODO: end of cleanup
 </script>
 
 <div
@@ -99,7 +93,9 @@
 		</div>
 
 		{#if !menu.show}
-			<div class="absolute top-[10px] left-[10px] text-white">{score}</div>
+			<div class="absolute top-[10px] left-[10px] text-white">
+				{general.score}
+			</div>
 		{/if}
 		<Starbursts />
 		<Bells {gameWindowRef} />

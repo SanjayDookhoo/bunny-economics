@@ -21,6 +21,9 @@ export const STARBURST_BASE_OPACITY = 15;
 export const STARBURST_ID_START = 5;
 export const FIRST_BELL_Y_POSITION_PX = 200;
 export const DEFAULT_VOLUME = 0.5;
+export const APEX_RANGE = 60;
+export const HOPPING_INITIAL_ANGLE = 20;
+export const BELL_POINTS = 10;
 
 export const BUNNY_SPRITE_ANIMATIONS_MAP = {
 	running: [

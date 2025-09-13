@@ -1,6 +1,7 @@
 <script>
 	import {
 		BELL_HITBOX_HEIGHT,
+		BELL_POINTS,
 		BELL_POSITION_Y_VARIANCE_AMOUNT,
 		BELLS_AUTO_FALL_SPEED_PER_SEC,
 		BELLS_MAX_COUNT,
@@ -29,7 +30,7 @@
 	let { gameWindowRef } = $props();
 
 	let bellsObj = $state({});
-	let bellsFallingAmount = $state(250);
+	let bellsFallingAmount = $state(0);
 
 	let latestBellId = 1;
 	let latestBellPositionY = 0;
@@ -153,16 +154,19 @@
 
 		clearInterval(bellsObj[bellId].intervalId);
 		bellsObj[bellId].hidden = true;
+
+		// keeps the bell in the DOM long enough for the collision effects to show, then remove
 		setTimeout(() => {
 			delete bellsObj[bellId];
 		}, 2000);
+
 		createNewBell();
-		fxPopShine(document.getElementById('bell-' + bellId), 10);
+		fxPopShine(document.getElementById('bell-' + bellId), BELL_POINTS);
 
 		bunnyGoalPosition.y = bunnyPosition.y + BELL_HITBOX_HEIGHT + Y_JUMP;
 		globals.inMaxFreeFallSpeed = 0;
 
-		general.score += 10;
+		general.score += BELL_POINTS;
 	};
 
 	onMount(() => {

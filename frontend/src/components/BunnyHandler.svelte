@@ -47,14 +47,14 @@
 	onMount(() => {
 		let raf,
 			prev = performance.now();
-		function frame(now) {
+		const frame = (now) => {
 			const dt = Math.min(0.1, (now - prev) / 1000);
 			prev = now;
 
 			updateCamera(dt);
 
 			requestAnimationFrame(frame);
-		}
+		};
 		raf = requestAnimationFrame(frame);
 		return () => cancelAnimationFrame(raf);
 	});
