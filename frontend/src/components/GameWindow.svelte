@@ -16,6 +16,7 @@
 	import BunnyHandler from './BunnyHandler.svelte';
 	import {
 		BUNNY_HITBOX_WIDTH,
+		DEFAULT_VOLUME,
 		DESPAWN_BELL_APPROACHING_GROUND_AT_PX,
 		Y_JUMP,
 	} from '$lib/constants';
