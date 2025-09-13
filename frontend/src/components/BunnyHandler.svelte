@@ -18,7 +18,7 @@
 
 	let { gameWindowRef, scale } = $props();
 
-	let bunnyGoalPositionYPrevForFallHandle;
+	let bunnyGoalPositionYPrevForFallHandle = $state(0);
 
 	let bunnyFacingDirection = $state('right');
 
@@ -201,4 +201,4 @@
 	});
 </script>
 
-<Bunny />
+<Bunny {bunnyFacingDirection} {bunnyGoalPositionYPrevForFallHandle} />

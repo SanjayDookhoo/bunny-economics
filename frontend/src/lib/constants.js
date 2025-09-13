@@ -21,3 +21,18 @@ export const STARBURST_BASE_OPACITY = 15;
 export const STARBURST_ID_START = 5;
 export const FIRST_BELL_Y_POSITION_PX = 200;
 export const DEFAULT_VOLUME = 0.5;
+
+export const BUNNY_SPRITE_ANIMATIONS_MAP = {
+	running: [
+		{ x: 1546, y: 0, width: 432, height: 298, angle: 0 },
+		{ x: 982, y: 0, width: 432, height: 298, angle: 0 },
+		{ x: 516, y: 0, width: 432, height: 298, angle: 0 },
+		{ x: 95, y: 0, width: 432, height: 298, angle: 0 },
+		{ x: 1546, y: 300, width: 432, height: 298, angle: 0 },
+		{ x: 987, y: 300, width: 432, height: 298, angle: 0 },
+		{ x: 497, y: 300, width: 432, height: 298, angle: 0 },
+		{ x: 95, y: 300, width: 432, height: 298, angle: 0 },
+	],
+	idle: [{ x: 516, y: 0, width: 432, height: 298, angle: 0 }],
+	hopping: [{ x: 987, y: 0, width: 432, height: 298 }],
+};
