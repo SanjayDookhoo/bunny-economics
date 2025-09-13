@@ -120,9 +120,10 @@
 			(bunnySpriteFlip
 				? -1
 				: 1)}) scaleY({SCALE}) rotate({bunnySpriteAnimationFrame.angle ??
-			0}deg); left: {-(bunnySpriteAnimationFrame.width / 2)}px; top: {-(
-			bunnySpriteAnimationFrame.height / 2
-		)}px;"
+			0}deg); left: {-(bunnySpriteAnimationFrame.width / 2) +
+			BUNNY_HITBOX_WIDTH / 2}px; top: {-(bunnySpriteAnimationFrame.height / 2) +
+			BUNNY_HITBOX_HEIGHT / 2 -
+			(['idle', 'running'].includes(bunnySpriteAnimation) ? 20 : 0)}px;"
 	></div>
 </div>
 
