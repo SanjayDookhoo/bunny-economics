@@ -1,7 +1,8 @@
 <script>
 	import {
 		BELL_HITBOX_HEIGHT,
-		BELL_POINTS,
+		BELL_HITBOX_WIDTH,
+		BELL_POINTS_INCREMENT,
 		BELL_POSITION_Y_VARIANCE_AMOUNT,
 		BELLS_AUTO_FALL_SPEED_PER_SEC,
 		BELLS_MAX_COUNT,
@@ -9,6 +10,7 @@
 		BUNNY_HITBOX_WIDTH,
 		DESPAWN_BELL_APPROACHING_GROUND_AT_PX,
 		DESPAWN_BELLS_BELOW_CURRENT_BUNNY_LOCATION_BELLS,
+		ETL_SECS_UNTIL_HALF_SIZE_BELLS,
 		FIRST_BELL_Y_POSITION_PX,
 		HORIZONTAL_INTERACTIVE_PADDING,
 		Y_BETWEEN_BELLS_BASE_HEIGHT,
@@ -31,9 +33,52 @@
 
 	let bellsObj = $state({});
 	let bellsFallingAmount = $state(0);
+	let bellHeight = $state(BELL_HITBOX_HEIGHT);
+	let bellWidth = $state(BELL_HITBOX_WIDTH);
+	let secondsPassed = 0;
+	let intervalId;
 
 	let latestBellId = 1;
 	let latestBellPositionY = 0;
+	let next_bell_points = BELL_POINTS_INCREMENT;
+
+	$effect(() => {
+		// first bell hit, implies game started
+		if (general.score == BELL_POINTS_INCREMENT) {
+			clearInterval(intervalId);
+			secondsPassed = 0;
+			intervalId = setInterval(() => {
+				secondsPassed++;
+				if (secondsPassed <= ETL_SECS_UNTIL_HALF_SIZE_BELLS) {
+					const reduceMultiplier =
+						secondsPassed / ETL_SECS_UNTIL_HALF_SIZE_BELLS;
+					bellHeight =
+						BELL_HITBOX_HEIGHT - (BELL_HITBOX_HEIGHT / 2) * reduceMultiplier;
+					console.log(bellHeight);
+					bellWidth =
+						BELL_HITBOX_WIDTH - (BELL_HITBOX_WIDTH / 2) * reduceMultiplier;
+				} else {
+					bellHeight = BELL_HITBOX_HEIGHT / 2;
+					bellWidth = BELL_HITBOX_WIDTH / 2;
+				}
+			}, 1000);
+		}
+	});
+
+	$effect(() => {
+		if (menu.show) {
+			clearInterval(intervalId);
+			secondsPassed = 0;
+			bellHeight = BELL_HITBOX_HEIGHT;
+			bellWidth = BELL_HITBOX_WIDTH;
+		}
+	});
+
+	$effect(() => {
+		if (menu.show) {
+			next_bell_points = BELL_POINTS_INCREMENT;
+		}
+	});
 
 	$effect(() => {
 		if (menu.show) {
@@ -161,12 +206,13 @@
 		}, 2000);
 
 		createNewBell();
-		fxPopShine(document.getElementById('bell-' + bellId), BELL_POINTS);
 
 		bunnyGoalPosition.y = bunnyPosition.y + BELL_HITBOX_HEIGHT + Y_JUMP;
 		globals.inMaxFreeFallSpeed = 0;
 
-		general.score += BELL_POINTS;
+		fxPopShine(document.getElementById('bell-' + bellId), next_bell_points);
+		general.score += next_bell_points;
+		next_bell_points += BELL_POINTS_INCREMENT;
 	};
 
 	onMount(() => {
@@ -234,6 +280,6 @@
 
 {#if !menu.show}
 	{#each Object.entries(bellsObj) as [bellId, bell] (bellId)}
-		<Bell {bellId} {bell} {bellsFallingAmount} />
+		<Bell {bellId} {bell} {bellsFallingAmount} {bellHeight} {bellWidth} />
 	{/each}
 {/if}

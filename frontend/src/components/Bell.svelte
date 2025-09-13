@@ -1,15 +1,16 @@
 <script>
-	import { BUNNY_HITBOX_HEIGHT, BUNNY_HITBOX_WIDTH } from '$lib/constants';
-	import { cameraPanning } from '$lib/stores.svelte';
+	import { BELL_POINTS_INCREMENT } from '$lib/constants';
+	import { cameraPanning, general, menu } from '$lib/stores.svelte';
+	import { onMount } from 'svelte';
 	import bellImg from '../assets/bell.png';
 
-	let { bellId, bell, bellsFallingAmount } = $props();
+	let { bellId, bell, bellsFallingAmount, bellHeight, bellWidth } = $props();
 </script>
 
 <div
 	id="bell-{bellId}"
 	class="absolute"
-	style="height: {BUNNY_HITBOX_HEIGHT}px; width: {BUNNY_HITBOX_WIDTH}px; bottom: {bellsFallingAmount +
+	style="bottom: {bellsFallingAmount +
 		bell.YPositionPX -
 		cameraPanning.y}px; left:{bell.XPositionPX}px;"
 >
@@ -17,15 +18,15 @@
 		class="swing-bell fade-in"
 		src={bellImg}
 		alt="bell"
-		style="visibility: {bell.hidden ? 'hidden' : 'visible'}"
+		style="height: {bellHeight}px; width: {bellWidth}px; visibility: {bell.hidden
+			? 'hidden'
+			: 'visible'}"
 	/>
 </div>
 
 <style>
 	.swing-bell {
 		display: block;
-		width: 64px;
-		height: 64px;
 		animation: swing 2s linear infinite;
 		transform-origin: 50% 0%; /* pivot at top center */
 	}

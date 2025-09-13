@@ -9,7 +9,7 @@ export const BELL_POSITION_Y_VARIANCE_AMOUNT = 20;
 export const Y_BETWEEN_BELLS_BASE_HEIGHT = 150;
 export const BELLS_AUTO_FALL_SPEED_PER_SEC = 30;
 export const Y_JUMP = 370;
-export const MAX_FREE_FALL_SPEED = -35;
+export const MAX_FREE_FALL_SPEED = -70;
 export const HORIZONTAL_INTERACTIVE_PADDING = 40;
 export const STARBURST_HEIGHT_RANGE = 50;
 export const STARBURST_COUNT_PER_RANGE = 3;
@@ -23,7 +23,8 @@ export const FIRST_BELL_Y_POSITION_PX = 200;
 export const DEFAULT_VOLUME = 0.5;
 export const APEX_RANGE = 60;
 export const HOPPING_INITIAL_ANGLE = 20;
-export const BELL_POINTS = 10;
+export const BELL_POINTS_INCREMENT = 10;
+export const ETL_SECS_UNTIL_HALF_SIZE_BELLS = 90; // 3 mins
 
 export const BUNNY_SPRITE_ANIMATIONS_MAP = {
 	running: [
