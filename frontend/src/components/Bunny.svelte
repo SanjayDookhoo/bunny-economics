@@ -144,23 +144,24 @@
 		image-rendering: pixelated; /* optional for crisp sprites */
 	}
 
-	@keyframes bounceWithPause {
-		0% {
-			transform: translateY(0); /* rest */
+	@keyframes bounceWithDelay {
+		0%,
+		85% {
+			transform: translateY(0); /* stay still */
 		}
-		10% {
+		90% {
 			transform: translateY(-10%); /* bounce up */
 		}
-		20% {
+		95% {
 			transform: translateY(0); /* back down */
 		}
 		100% {
-			transform: translateY(0); /* stay still until cycle restarts */
+			transform: translateY(0); /* finish at rest */
 		}
 	}
 
 	.idle-bounce {
 		display: inline-block;
-		animation: bounceWithPause 3.5s infinite;
+		animation: bounceWithDelay 3.5s infinite;
 	}
 </style>
