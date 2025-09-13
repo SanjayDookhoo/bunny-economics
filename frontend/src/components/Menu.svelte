@@ -212,6 +212,13 @@
 					</div>
 				{:else if optionSelected == 'How to play'}
 					<h2>How to play</h2>
+
+					<ul class="list-disc pl-6">
+						<li>Use your mouse to move</li>
+						<li>Click mouse button to jump for the first time</li>
+						<li>Touch the bells to increase your score and jump higher</li>
+						<li>Learn about economics from the Scoreboard Headlines!!</li>
+					</ul>
 				{/if}
 			</main>
 		</div>
