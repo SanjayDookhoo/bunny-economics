@@ -54,7 +54,6 @@
 						secondsPassed / ETL_SECS_UNTIL_HALF_SIZE_BELLS;
 					bellHeight =
 						BELL_HITBOX_HEIGHT - (BELL_HITBOX_HEIGHT / 2) * reduceMultiplier;
-					console.log(bellHeight);
 					bellWidth =
 						BELL_HITBOX_WIDTH - (BELL_HITBOX_WIDTH / 2) * reduceMultiplier;
 				} else {

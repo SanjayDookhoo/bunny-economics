@@ -1,5 +1,12 @@
 <script>
+	import {
+		bunnyFocusedNotes,
+		economyFocusedNotes,
+		esistentialBunnyNotes,
+		preNotes,
+	} from '$lib/economyNotes';
 	import { general, menu } from '$lib/stores.svelte';
+	import { getRandomFloatInclusive, getRandomIntInclusive } from '$lib/utils';
 	import { onMount } from 'svelte';
 
 	const options = ['Scoreboard', 'How to play'];
@@ -7,6 +14,64 @@
 	let optionSelected = $derived(playedBefore ? 'Scoreboard' : 'How to play');
 
 	let inFullscreen = $state(false);
+	let scoreEvaluation = $state();
+	let scoreEvaluationColor = $state();
+	let note = $state();
+	let preNote = $state();
+
+	$effect(() => {
+		if (
+			general.previousScore == null ||
+			general.score > general.previousScore
+		) {
+			scoreEvaluation = 'arrow_upward_alt';
+			scoreEvaluationColor = 'green';
+		} else if (general.score < general.previousScore) {
+			scoreEvaluation = 'arrow_downward_alt';
+			scoreEvaluationColor = 'red';
+		} else {
+			scoreEvaluation = 'horizontal_rule';
+			scoreEvaluationColor = 'gray';
+		}
+	});
+
+	$effect(() => {
+		if (menu.show) {
+			let type;
+			if (scoreEvaluationColor == 'green') type = 'blessings';
+			if (scoreEvaluationColor == 'red') type = 'challenges';
+			if (scoreEvaluationColor == 'gray') type = 'neutral';
+
+			// preNote
+			const randForPreNote = getRandomIntInclusive(0, preNotes[type].length);
+			preNote = preNotes[type][randForPreNote];
+
+			// note
+			const randForEvent = getRandomFloatInclusive(0, 100);
+			if (randForEvent < 10 || scoreEvaluationColor == 'gray') {
+				// 10% esistentialBunnyNotes
+				const randForNote = getRandomIntInclusive(
+					0,
+					esistentialBunnyNotes.length
+				);
+				note = esistentialBunnyNotes[randForNote];
+			} else if (randForEvent < 30) {
+				// 20% bunnyFocusedNotes
+				const randForNote = getRandomIntInclusive(
+					0,
+					bunnyFocusedNotes[type].length
+				);
+				note = bunnyFocusedNotes[type][randForNote];
+			} else {
+				// 70% economyFocusedNotes
+				const randForNote = getRandomIntInclusive(
+					0,
+					economyFocusedNotes[type].length
+				);
+				note = economyFocusedNotes[type][randForNote];
+			}
+		}
+	});
 
 	// this ensures that the true state of inFullscreen is kept, because the user can exit the fullscreen with the keyboard "Escape" button, hence continuously checking the fullscreen state is required
 	onMount(() => {
@@ -106,11 +171,45 @@
 			{/if}
 			<main class="panel-main grow">
 				{#if optionSelected == 'Scoreboard'}
-					<h2>Scoreboard</h2>
-					Score: {general.score}
-					{#if general.previousScore !== null}
-						Previous Score: {general.previousScore}
-					{/if}
+					<h2>Scoreboard / Global News</h2>
+					<div class="flex flex-col text-white [&>*]:mb-2">
+						<div class="flex items-center">
+							<span
+								class="material-symbols-outlined"
+								style="color: {scoreEvaluationColor}"
+							>
+								{scoreEvaluation}
+							</span>
+							<div class="pl-2 flex">
+								<div class="font-bold">Score:</div>
+								<div class="pl-2">{general.score}</div>
+							</div>
+							{#if general.previousScore !== null}
+								<div class="pl-8 flex">
+									<div class="font-bold">Previous Score:</div>
+									<div class="pl-2">{general.previousScore}</div>
+								</div>
+							{/if}
+						</div>
+						<div class="text-center italic">{preNote}</div>
+						<div>
+							<div class="flex">
+								{#if note?.title}
+									<div class="w-14 font-bold">Title:</div>
+									<div>{note.title}</div>
+								{/if}
+							</div>
+
+							<div class="flex">
+								{#if note?.effect}
+									<div class="w-14 font-bold">Effect:</div>
+									<div>{note.effect}</div>
+								{/if}
+							</div>
+						</div>
+
+						<div class="italic">{note.flavor}</div>
+					</div>
 				{:else if optionSelected == 'How to play'}
 					<h2>How to play</h2>
 				{/if}
