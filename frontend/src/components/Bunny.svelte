@@ -112,9 +112,10 @@
 		style="width: {bunnySpriteAnimationFrame.width}px; height: {bunnySpriteAnimationFrame.height}px; background-position: -{bunnySpriteAnimationFrame.x}px -{bunnySpriteAnimationFrame.y}px; transform: scaleX({SCALE *
 			(bunnySpriteFlip
 				? -1
-				: 1)}) scaleY({SCALE}) rotate({bunnySpriteAnimationFrame.angle}deg); left: {-(
-			bunnySpriteAnimationFrame.width / 2
-		)}px; top: {-(bunnySpriteAnimationFrame.height / 2)}px;"
+				: 1)}) scaleY({SCALE}) rotate({bunnySpriteAnimationFrame.angle ??
+			0}deg); left: {-(bunnySpriteAnimationFrame.width / 2)}px; top: {-(
+			bunnySpriteAnimationFrame.height / 2
+		)}px;"
 	></div>
 </div>
 
