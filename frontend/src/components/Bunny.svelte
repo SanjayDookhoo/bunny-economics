@@ -136,7 +136,7 @@
 		/* Base setup */
 		width: 100px; /* default width of the visible area */
 		height: 100px; /* default height of the visible area */
-		background-image: url('./bunny-spritesheet.png');
+		background-image: url('/bunny-spritesheet.png');
 		background-repeat: no-repeat;
 		overflow: hidden;
 
