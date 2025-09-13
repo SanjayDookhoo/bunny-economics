@@ -20,7 +20,7 @@
 			<div class="flex items-center">
 				<a class="flex items-center" href="/">
 					<img src="./logo.png" class="w-12 h-12" alt="logo" />
-					<div class="pl-4" style="font-size: 30px;">Prosperity Bunny</div>
+					<div class="pl-4" style="font-size: 30px;">Bunny Economics</div>
 				</a>
 			</div>
 			<div class="flex [&>*]:px-4">

@@ -6,7 +6,7 @@
 	<section>
 		<h2>About the Game</h2>
 		<p>
-			<strong>Prosperity Bunny</strong> was created for
+			<strong>Bunny Economics</strong> was created for
 			<em>Hack the System</em>, a civic and economic tech hackathon. It's a
 			lighthearted game where you play as a curious bunny hopping across bells
 			to collect points.
@@ -23,8 +23,8 @@
 		<h2>Why It Matters</h2>
 		<p>
 			Economics can feel distant or intimidating.
-			<em>Prosperity Bunny</em> makes it approachable and fun. Instead of graphs
-			and jargon, players see cause and effect through playful headlines and outcomes.
+			<em>Bunny Economics</em> makes it approachable and fun. Instead of graphs and
+			jargon, players see cause and effect through playful headlines and outcomes.
 		</p>
 		<p>
 			The game teaches important ideas, like labor expansion, productivity
@@ -46,7 +46,7 @@
 	<section>
 		<h2>Our Vision</h2>
 		<p>
-			By disguising learning as laughter, <em>Prosperity Bunny</em> encourages players
+			By disguising learning as laughter, <em>Bunny Economics</em> encourages players
 			of all backgrounds to engage with civic and economic systems. Every hop is
 			both a game and a lesson, showing that even small steps can shift the economy
 			and maybe the world, toward prosperity.
