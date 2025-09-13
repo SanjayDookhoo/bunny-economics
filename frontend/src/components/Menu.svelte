@@ -43,7 +43,10 @@
 			if (scoreEvaluationColor == 'gray') type = 'neutral';
 
 			// preNote
-			const randForPreNote = getRandomIntInclusive(0, preNotes[type].length);
+			const randForPreNote = getRandomIntInclusive(
+				0,
+				preNotes[type].length - 1
+			);
 			preNote = preNotes[type][randForPreNote];
 
 			// note
@@ -52,21 +55,21 @@
 				// 10% esistentialBunnyNotes
 				const randForNote = getRandomIntInclusive(
 					0,
-					esistentialBunnyNotes.length
+					esistentialBunnyNotes.length - 1
 				);
 				note = esistentialBunnyNotes[randForNote];
 			} else if (randForEvent < 30) {
 				// 20% bunnyFocusedNotes
 				const randForNote = getRandomIntInclusive(
 					0,
-					bunnyFocusedNotes[type].length
+					bunnyFocusedNotes[type].length - 1
 				);
 				note = bunnyFocusedNotes[type][randForNote];
 			} else {
 				// 70% economyFocusedNotes
 				const randForNote = getRandomIntInclusive(
 					0,
-					economyFocusedNotes[type].length
+					economyFocusedNotes[type].length - 1
 				);
 				note = economyFocusedNotes[type][randForNote];
 			}
