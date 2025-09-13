@@ -54,7 +54,7 @@
 		{@render children?.()}
 	</div>
 	<div
-		class="flex justify-center w-screen absolute bottom-[5px] bg-gray-900 text-white"
+		class="flex justify-center w-screen fixed bottom-0 bg-gray-800 text-white"
 	>
 		<div>
 			Built with care for <strong>Hack the System</strong>. May your bells be
