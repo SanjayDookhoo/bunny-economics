@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+	'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+letter-spacing: 0.2px;
+
 .popshine {
 	background: conic-gradient(from 220deg, var(--accent), var(--accent2));
 }

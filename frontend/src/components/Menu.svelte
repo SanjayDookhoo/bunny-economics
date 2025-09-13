@@ -171,7 +171,7 @@
 			{/if}
 			<main class="panel-main grow">
 				{#if optionSelected == 'Scoreboard'}
-					<h2>Scoreboard / Global News</h2>
+					<h2>Scoreboard / Global Headlines</h2>
 					<div class="flex flex-col text-white [&>*]:mb-2">
 						<div class="flex items-center">
 							<span
