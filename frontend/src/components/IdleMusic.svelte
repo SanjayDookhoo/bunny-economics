@@ -5,6 +5,7 @@
 	let userInteracted = false;
 
 	let gainNode = $state(null);
+	let source;
 
 	// Chrome (and most modern browsers) block autoplay of audio/video with sound until the user has interacted with the page
 	// loads into buffer and plays from buffer to reduce the delay of autoplay restarting the loop
@@ -21,7 +22,6 @@
 
 				let audioContext;
 				let buffer;
-				let source;
 
 				const loadAudio = async () => {
 					if (!audioContext) {
@@ -31,7 +31,7 @@
 						gainNode.connect(audioContext.destination); // connect it to speakers
 					}
 					// Fetch and decode
-					const response = await fetch('./idle.mp3'); // adjust path if needed
+					const response = await fetch('/idle.mp3'); // adjust path if needed
 					const arrayBuffer = await response.arrayBuffer();
 					buffer = await audioContext.decodeAudioData(arrayBuffer);
 				};
@@ -61,7 +61,10 @@
 		document.addEventListener('keydown', interactedWithPage);
 		document.addEventListener('touchstart', interactedWithPage);
 
-		return () => removeListeners();
+		return () => {
+			removeListeners();
+			if (source) source.stop();
+		};
 	});
 
 	$effect(() => {
