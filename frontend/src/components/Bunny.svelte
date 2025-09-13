@@ -107,7 +107,9 @@
 
 <div
 	id="bunny"
-	class="absolute fade-in-out"
+	class="absolute fade-in-out {bunnySpriteAnimation == 'idle'
+		? 'idle-bounce'
+		: ''}"
 	style="height: {BUNNY_HITBOX_HEIGHT}px; width: {BUNNY_HITBOX_WIDTH}px; bottom: {bunnyPosition.y -
 		cameraPanning.y}px; left:{bunnyPosition.x}px; opacity: {menu.show ? 0 : 1}"
 >
@@ -140,5 +142,25 @@
 		transform-origin: center; /* rotate around center */
 		will-change: transform; /* smoother animations */
 		image-rendering: pixelated; /* optional for crisp sprites */
+	}
+
+	@keyframes bounceWithPause {
+		0% {
+			transform: translateY(0); /* rest */
+		}
+		10% {
+			transform: translateY(-10%); /* bounce up */
+		}
+		20% {
+			transform: translateY(0); /* back down */
+		}
+		100% {
+			transform: translateY(0); /* stay still until cycle restarts */
+		}
+	}
+
+	.idle-bounce {
+		display: inline-block;
+		animation: bounceWithPause 3.5s infinite;
 	}
 </style>
